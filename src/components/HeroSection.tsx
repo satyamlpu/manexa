@@ -23,7 +23,7 @@ const HeroSection = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
-                href="#"
+                href="/register"
                 className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground font-semibold px-8 py-3.5 text-base hover:bg-primary-hover transition-colors glow-lime"
               >
                 Get Started

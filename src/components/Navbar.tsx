@@ -46,11 +46,11 @@ const Navbar = () => {
         </ul>
 
         <div className="hidden md:flex items-center gap-4">
-          <a href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <a href="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Login
           </a>
           <a
-            href="#"
+            href="/register"
             className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground font-semibold text-sm px-5 py-2.5 hover:bg-primary-hover transition-colors"
           >
             Get Started
@@ -84,8 +84,8 @@ const Navbar = () => {
             ))}
           </ul>
           <div className="flex flex-col gap-3">
-            <a href="#" className="text-center text-sm text-muted-foreground hover:text-foreground">Login</a>
-            <a href="#" className="block text-center rounded-lg bg-primary text-primary-foreground font-semibold text-sm px-5 py-3 hover:bg-primary-hover transition-colors">
+            <a href="/login" className="text-center text-sm text-muted-foreground hover:text-foreground">Login</a>
+            <a href="/register" className="block text-center rounded-lg bg-primary text-primary-foreground font-semibold text-sm px-5 py-3 hover:bg-primary-hover transition-colors">
               Get Started
             </a>
           </div>

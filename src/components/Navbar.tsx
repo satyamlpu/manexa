@@ -3,12 +3,12 @@ import { Menu, X } from "lucide-react";
 import manexaLogo from "@/assets/manexa-logo.svg";
 
 const navLinks = [
-  { label: "Home", href: "#home" },
-  { label: "Features", href: "#features" },
-  { label: "Workflow", href: "#workflow" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "Contact", href: "#contact" },
-];
+{ label: "Home", href: "#home" },
+{ label: "Features", href: "#features" },
+{ label: "Workflow", href: "#workflow" },
+{ label: "Pricing", href: "#pricing" },
+{ label: "Contact", href: "#contact" }];
+
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -23,26 +23,26 @@ const Navbar = () => {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-background/95 backdrop-blur-md border-b border-border" : "bg-transparent"
-      }`}
-    >
-      <nav className="container mx-auto flex items-center justify-between py-4 px-4 lg:px-8">
-        <a href="#home" className="flex-shrink-0">
-          <img src={manexaLogo} alt="Manexa Logo" className="h-10 md:h-12 w-auto" />
+      scrolled ? "bg-background/95 backdrop-blur-md border-b border-border" : "bg-transparent"}`
+      }>
+
+      <nav className="container mx-auto flex items-center justify-between py-4 lg:px-8 px-[40px]">
+        <a href="#home" className="flex-shrink-0 my-0.5 ">
+          <img src={manexaLogo} alt="Manexa Logo" className="h-10 md:h-12 w-auto border-0 object-contain border-white border-solid" />
         </a>
 
         {/* Desktop nav */}
         <ul className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <li key={link.href}>
+          {navLinks.map((link) =>
+          <li key={link.href}>
               <a
-                href={link.href}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
+              href={link.href}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+
                 {link.label}
               </a>
             </li>
-          ))}
+          )}
         </ul>
 
         <div className="hidden md:flex items-center gap-4">
@@ -51,8 +51,8 @@ const Navbar = () => {
           </a>
           <a
             href="/register"
-            className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground font-semibold text-sm px-5 py-2.5 hover:bg-primary-hover transition-colors"
-          >
+            className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground font-semibold text-sm px-5 py-2.5 hover:bg-primary-hover transition-colors">
+
             Get Started
           </a>
         </div>
@@ -61,27 +61,27 @@ const Navbar = () => {
         <button
           className="md:hidden text-foreground"
           onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Toggle menu"
-        >
+          aria-label="Toggle menu">
+
           {mobileOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </nav>
 
       {/* Mobile menu */}
-      {mobileOpen && (
-        <div className="md:hidden bg-background/98 backdrop-blur-md border-b border-border px-4 pb-6">
+      {mobileOpen &&
+      <div className="md:hidden bg-background/98 backdrop-blur-md border-b border-border px-4 pb-6">
           <ul className="flex flex-col gap-4 mb-6">
-            {navLinks.map((link) => (
-              <li key={link.href}>
+            {navLinks.map((link) =>
+          <li key={link.href}>
                 <a
-                  href={link.href}
-                  className="block text-base text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={() => setMobileOpen(false)}
-                >
+              href={link.href}
+              className="block text-base text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => setMobileOpen(false)}>
+
                   {link.label}
                 </a>
               </li>
-            ))}
+          )}
           </ul>
           <div className="flex flex-col gap-3">
             <a href="/login" className="text-center text-sm text-muted-foreground hover:text-foreground">Login</a>
@@ -90,9 +90,9 @@ const Navbar = () => {
             </a>
           </div>
         </div>
-      )}
-    </header>
-  );
+      }
+    </header>);
+
 };
 
 export default Navbar;

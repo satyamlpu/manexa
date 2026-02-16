@@ -139,6 +139,66 @@ export type Database = {
           },
         ]
       }
+      fees: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string | null
+          id: string
+          institution_id: string
+          paid_amount: number
+          payment_date: string | null
+          receipt_number: string | null
+          status: string
+          student_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          institution_id: string
+          paid_amount?: number
+          payment_date?: string | null
+          receipt_number?: string | null
+          status?: string
+          student_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          institution_id?: string
+          paid_amount?: number
+          payment_date?: string | null
+          receipt_number?: string | null
+          status?: string
+          student_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fees_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fees_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       institutions: {
         Row: {
           address: string | null
@@ -224,7 +284,9 @@ export type Database = {
           guardian_phone: string | null
           id: string
           institution_id: string
+          parent_user_id: string | null
           roll_number: string | null
+          section: string | null
           user_id: string
         }
         Insert: {
@@ -234,7 +296,9 @@ export type Database = {
           guardian_phone?: string | null
           id?: string
           institution_id: string
+          parent_user_id?: string | null
           roll_number?: string | null
+          section?: string | null
           user_id: string
         }
         Update: {
@@ -244,7 +308,9 @@ export type Database = {
           guardian_phone?: string | null
           id?: string
           institution_id?: string
+          parent_user_id?: string | null
           roll_number?: string | null
+          section?: string | null
           user_id?: string
         }
         Relationships: [
@@ -307,6 +373,69 @@ export type Database = {
             columns: ["institution_id"]
             isOneToOne: false
             referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teacher_salaries: {
+        Row: {
+          base_salary: number
+          bonus: number
+          created_at: string
+          deductions: number
+          id: string
+          institution_id: string
+          month: string
+          net_salary: number
+          paid_date: string | null
+          status: string
+          teacher_id: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          base_salary?: number
+          bonus?: number
+          created_at?: string
+          deductions?: number
+          id?: string
+          institution_id: string
+          month: string
+          net_salary?: number
+          paid_date?: string | null
+          status?: string
+          teacher_id: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          base_salary?: number
+          bonus?: number
+          created_at?: string
+          deductions?: number
+          id?: string
+          institution_id?: string
+          month?: string
+          net_salary?: number
+          paid_date?: string | null
+          status?: string
+          teacher_id?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_salaries_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teacher_salaries_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
             referencedColumns: ["id"]
           },
         ]
@@ -398,7 +527,13 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "SUPER_ADMIN" | "FOUNDER" | "PRINCIPAL" | "TEACHER" | "STUDENT"
+      app_role:
+        | "SUPER_ADMIN"
+        | "FOUNDER"
+        | "PRINCIPAL"
+        | "TEACHER"
+        | "STUDENT"
+        | "PARENT"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -526,7 +661,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["SUPER_ADMIN", "FOUNDER", "PRINCIPAL", "TEACHER", "STUDENT"],
+      app_role: [
+        "SUPER_ADMIN",
+        "FOUNDER",
+        "PRINCIPAL",
+        "TEACHER",
+        "STUDENT",
+        "PARENT",
+      ],
     },
   },
 } as const

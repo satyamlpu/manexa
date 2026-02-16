@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import manexaLogo from "@/assets/manexa-logo.svg";
 import {
   LayoutDashboard, Users, GraduationCap, BookOpen, ClipboardCheck,
-  ListTodo, Megaphone, LogOut, Menu, X, School
+  ListTodo, Megaphone, LogOut, Menu, X, School, IndianRupee, Wallet
 } from "lucide-react";
 
 interface NavItem {
@@ -22,6 +22,8 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "Classes", href: "/dashboard/founder/classes", icon: BookOpen },
     { label: "Attendance", href: "/dashboard/founder/attendance", icon: ClipboardCheck },
     { label: "Tasks", href: "/dashboard/founder/tasks", icon: ListTodo },
+    { label: "Fees", href: "/dashboard/founder/fees", icon: IndianRupee },
+    { label: "Salaries", href: "/dashboard/founder/salaries", icon: Wallet },
     { label: "Announcements", href: "/dashboard/founder/announcements", icon: Megaphone },
   ],
   PRINCIPAL: [
@@ -29,6 +31,7 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "Teachers", href: "/dashboard/principal/teachers", icon: Users },
     { label: "Students", href: "/dashboard/principal/students", icon: GraduationCap },
     { label: "Attendance", href: "/dashboard/principal/attendance", icon: ClipboardCheck },
+    { label: "Fees", href: "/dashboard/principal/fees", icon: IndianRupee },
     { label: "Announcements", href: "/dashboard/principal/announcements", icon: Megaphone },
   ],
   TEACHER: [
@@ -36,6 +39,12 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "My Classes", href: "/dashboard/teacher/classes", icon: BookOpen },
     { label: "Attendance", href: "/dashboard/teacher/attendance", icon: ClipboardCheck },
     { label: "Tasks", href: "/dashboard/teacher/tasks", icon: ListTodo },
+  ],
+  PARENT: [
+    { label: "Dashboard", href: "/dashboard/parent", icon: LayoutDashboard },
+    { label: "Attendance", href: "/dashboard/parent/attendance", icon: ClipboardCheck },
+    { label: "Fees", href: "/dashboard/parent/fees", icon: IndianRupee },
+    { label: "Announcements", href: "/dashboard/parent/announcements", icon: Megaphone },
   ],
   STUDENT: [
     { label: "Dashboard", href: "/dashboard/student", icon: LayoutDashboard },
@@ -60,12 +69,11 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-4 border-b border-border">
             <Link to="/">
-              <img src={manexaLogo} alt="Manexa" className="h-8" />
+              <img src={manexaLogo} alt="Manexa" className="h-12 w-auto" />
             </Link>
             <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground">
               <X size={20} />
@@ -110,12 +118,10 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </aside>
 
-      {/* Overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 bg-background/80 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Main */}
       <div className="flex-1 lg:ml-64">
         <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-3">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-foreground">

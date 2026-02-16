@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { full_name, email, password, role, department, qualification, class_id, roll_number, guardian_name, guardian_phone } = await req.json();
+    const { full_name, email, password, role, department, qualification, class_id, roll_number, guardian_name, guardian_phone, linked_student_ids } = await req.json();
 
     if (!full_name || !email || !password || !role) {
       return new Response(
@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const validRoles = ["PRINCIPAL", "TEACHER", "STUDENT"];
+    const validRoles = ["PRINCIPAL", "TEACHER", "STUDENT", "PARENT"];
     if (!validRoles.includes(role)) {
       return new Response(
         JSON.stringify({ success: false, message: "Invalid role" }),
@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
       .from("user_roles")
       .insert({ user_id: newUserId, institution_id: institutionId, role });
 
-    // Create teacher/student record
+    // Create role-specific records
     if (role === "TEACHER") {
       await supabaseAdmin
         .from("teachers")
@@ -129,6 +129,15 @@ Deno.serve(async (req) => {
           guardian_name,
           guardian_phone,
         });
+    } else if (role === "PARENT" && linked_student_ids?.length > 0) {
+      // Link parent to students
+      for (const sid of linked_student_ids) {
+        await supabaseAdmin
+          .from("students")
+          .update({ parent_user_id: newUserId })
+          .eq("id", sid)
+          .eq("institution_id", institutionId);
+      }
     }
 
     return new Response(

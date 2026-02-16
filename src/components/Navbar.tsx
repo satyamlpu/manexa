@@ -28,7 +28,7 @@ const Navbar = () => {
 
       <nav className="container mx-auto flex items-center justify-between py-4 lg:px-8 px-[40px]">
         <a href="#home" className="flex-shrink-0 my-0.5 ">
-          <img src={manexaLogo} alt="Manexa Logo" className="h-10 md:h-12 w-auto border-none border-primary border-8 object-cover" />
+          <img src={manexaLogo} alt="Manexa Logo" className="h-12 md:h-14 w-auto object-contain" />
         </a>
 
         {/* Desktop nav */}

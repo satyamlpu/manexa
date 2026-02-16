@@ -37,6 +37,7 @@ const Login = () => {
       FOUNDER: "/dashboard/founder",
       PRINCIPAL: "/dashboard/principal",
       TEACHER: "/dashboard/teacher",
+      PARENT: "/dashboard/parent",
       STUDENT: "/dashboard/student",
     };
     const target = dashMap[primaryRole || ""] || "/dashboard/founder";

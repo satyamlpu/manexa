@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import manexaLogo from "@/assets/manexa-logo.svg";
 import {
   LayoutDashboard, Users, GraduationCap, BookOpen, ClipboardCheck,
-  ListTodo, Megaphone, LogOut, Menu, X, School, IndianRupee, Wallet
+  ListTodo, Megaphone, LogOut, Menu, X, School, IndianRupee, Wallet, MessageSquare
 } from "lucide-react";
 
 interface NavItem {
@@ -25,6 +25,7 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "Fees", href: "/dashboard/founder/fees", icon: IndianRupee },
     { label: "Salaries", href: "/dashboard/founder/salaries", icon: Wallet },
     { label: "Announcements", href: "/dashboard/founder/announcements", icon: Megaphone },
+    { label: "Messages", href: "/dashboard/founder/messages", icon: MessageSquare },
   ],
   PRINCIPAL: [
     { label: "Dashboard", href: "/dashboard/principal", icon: LayoutDashboard },
@@ -33,18 +34,21 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "Attendance", href: "/dashboard/principal/attendance", icon: ClipboardCheck },
     { label: "Fees", href: "/dashboard/principal/fees", icon: IndianRupee },
     { label: "Announcements", href: "/dashboard/principal/announcements", icon: Megaphone },
+    { label: "Messages", href: "/dashboard/principal/messages", icon: MessageSquare },
   ],
   TEACHER: [
     { label: "Dashboard", href: "/dashboard/teacher", icon: LayoutDashboard },
     { label: "My Classes", href: "/dashboard/teacher/classes", icon: BookOpen },
     { label: "Attendance", href: "/dashboard/teacher/attendance", icon: ClipboardCheck },
     { label: "Tasks", href: "/dashboard/teacher/tasks", icon: ListTodo },
+    { label: "Messages", href: "/dashboard/teacher/messages", icon: MessageSquare },
   ],
   PARENT: [
     { label: "Dashboard", href: "/dashboard/parent", icon: LayoutDashboard },
     { label: "Attendance", href: "/dashboard/parent/attendance", icon: ClipboardCheck },
     { label: "Fees", href: "/dashboard/parent/fees", icon: IndianRupee },
     { label: "Announcements", href: "/dashboard/parent/announcements", icon: Megaphone },
+    { label: "Messages", href: "/dashboard/parent/messages", icon: MessageSquare },
   ],
   STUDENT: [
     { label: "Dashboard", href: "/dashboard/student", icon: LayoutDashboard },

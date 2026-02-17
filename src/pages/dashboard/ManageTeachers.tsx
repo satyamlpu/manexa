@@ -22,11 +22,23 @@ const ManageTeachers = () => {
 
   const fetchTeachers = async () => {
     if (!profile?.institution_id) return;
-    const { data } = await supabase
+    const { data: teacherData } = await supabase
       .from("teachers")
-      .select("id, department, qualification, user_id, profiles:user_id(full_name, email)")
-      .eq("institution_id", profile.institution_id) as { data: TeacherRow[] | null };
-    setTeachers(data || []);
+      .select("id, department, qualification, user_id")
+      .eq("institution_id", profile.institution_id);
+    
+    if (!teacherData?.length) { setTeachers([]); return; }
+    
+    const userIds = teacherData.map(t => t.user_id);
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("user_id, full_name, email")
+      .in("user_id", userIds);
+    
+    const profileMap: Record<string, { full_name: string; email: string }> = {};
+    profiles?.forEach(p => { profileMap[p.user_id] = p; });
+    
+    setTeachers(teacherData.map(t => ({ ...t, profiles: profileMap[t.user_id] || null })));
   };
 
   useEffect(() => { fetchTeachers(); }, [profile?.institution_id]);

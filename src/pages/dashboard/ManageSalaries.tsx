@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Download } from "lucide-react";
+import { exportSalarySlipPDF } from "@/lib/pdfExport";
 
 const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
@@ -18,12 +19,23 @@ const ManageSalaries = () => {
   const fetchData = async () => {
     if (!profile?.institution_id) return;
     const instId = profile.institution_id!;
-    const [s, t] = await Promise.all([
-      supabase.from("teacher_salaries").select("*, teachers!inner(id, user_id, profiles:user_id(full_name))").eq("institution_id", instId).order("created_at", { ascending: false }),
-      supabase.from("teachers").select("id, user_id, profiles:user_id(full_name)").eq("institution_id", instId),
+    const [sRes, tRes] = await Promise.all([
+      supabase.from("teacher_salaries").select("*").eq("institution_id", instId).order("created_at", { ascending: false }),
+      supabase.from("teachers").select("id, user_id").eq("institution_id", instId),
     ]);
-    setSalaries(s.data || []);
-    setTeachers(t.data || []);
+    
+    const teacherData = tRes.data || [];
+    const userIds = teacherData.map(t => t.user_id);
+    const { data: profiles } = userIds.length ? await supabase.from("profiles").select("user_id, full_name").in("user_id", userIds) : { data: [] };
+    
+    const profileMap: Record<string, string> = {};
+    profiles?.forEach(p => { profileMap[p.user_id] = p.full_name; });
+    
+    const teacherMap: Record<string, any> = {};
+    teacherData.forEach(t => { teacherMap[t.id] = { ...t, profiles: { full_name: profileMap[t.user_id] || "—" } }; });
+    
+    setSalaries((sRes.data || []).map(s => ({ ...s, teachers: teacherMap[s.teacher_id] || null })));
+    setTeachers(teacherData.map(t => ({ ...t, profiles: { full_name: profileMap[t.user_id] || "—" } })));
   };
 
   useEffect(() => { fetchData(); }, [profile?.institution_id]);
@@ -122,10 +134,27 @@ const ManageSalaries = () => {
                         {s.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 flex items-center gap-2">
                       {s.status !== "paid" && (
                         <button onClick={() => markPaid(s.id)} className="text-xs text-primary hover:underline">Mark Paid</button>
                       )}
+                      <button
+                        onClick={() => exportSalarySlipPDF({
+                          teacherName: s.teachers?.profiles?.full_name || "—",
+                          month: s.month,
+                          year: s.year,
+                          baseSalary: s.base_salary,
+                          bonus: s.bonus,
+                          deductions: s.deductions,
+                          netSalary: s.net_salary,
+                          status: s.status,
+                          paidDate: s.paid_date,
+                        })}
+                        className="text-xs text-muted-foreground hover:text-foreground"
+                        title="Download Salary Slip"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </button>
                     </td>
                   </tr>
                 ))

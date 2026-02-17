@@ -15,7 +15,7 @@ const Register = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
-  const { signUp } = useAuth();
+  const { signUp, refreshUserData } = useAuth();
   const navigate = useNavigate();
 
   const handleStep1 = (e: React.FormEvent) => {
@@ -55,6 +55,7 @@ const Register = () => {
         return;
       }
 
+      await refreshUserData();
       navigate("/dashboard/founder");
     } else {
       // Email confirmation required

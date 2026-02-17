@@ -23,6 +23,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   primaryRole: AppRole | null;
+  refreshUserData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -98,8 +99,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const rolePriority: AppRole[] = ["SUPER_ADMIN", "FOUNDER", "PRINCIPAL", "TEACHER", "PARENT", "STUDENT"];
   const primaryRole = rolePriority.find(r => roles.includes(r)) ?? null;
 
+  const refreshUserData = async () => {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (currentUser) await fetchUserData(currentUser.id);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, profile, roles, loading, signUp, signIn, signOut, primaryRole }}>
+    <AuthContext.Provider value={{ user, session, profile, roles, loading, signUp, signIn, signOut, primaryRole, refreshUserData }}>
       {children}
     </AuthContext.Provider>
   );

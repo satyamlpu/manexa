@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
+import { Download } from "lucide-react";
+import { exportAttendancePDF } from "@/lib/pdfExport";
 
 const ManageAttendance = () => {
   const { user, profile } = useAuth();
@@ -93,6 +95,19 @@ const ManageAttendance = () => {
                 {saving ? "Saving..." : "Save Attendance"}
               </button>
               {saved && <span className="text-sm text-primary">✓ Saved!</span>}
+              <button
+                onClick={() => {
+                  const cls = classes.find(c => c.id === selectedClass);
+                  exportAttendancePDF(
+                    `${cls?.class_name || ""} ${cls?.section || ""}`.trim(),
+                    date,
+                    students.map((s: any) => ({ rollNumber: s.roll_number || "", name: s.profiles?.full_name || "—", status: attendance[s.id] || "Present" }))
+                  );
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors"
+              >
+                <Download className="w-4 h-4" /> Export PDF
+              </button>
             </div>
           </div>
         )}

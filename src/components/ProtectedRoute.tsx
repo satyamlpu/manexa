@@ -19,8 +19,16 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
 
   if (!user) return <Navigate to="/login" replace />;
 
+  // If user exists but roles haven't loaded yet, show loading
+  if (roles.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   if (allowedRoles && !roles.some(r => allowedRoles.includes(r))) {
-    // Redirect to their own dashboard
     const dashMap: Record<string, string> = {
       FOUNDER: "/dashboard/founder",
       PRINCIPAL: "/dashboard/principal",

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import manexaLogo from "@/assets/manexa-logo.svg";
@@ -8,8 +8,22 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, primaryRole } = useAuth();
+  const { signIn, primaryRole, user, roles } = useAuth();
   const navigate = useNavigate();
+
+  // If already logged in and has a role, redirect
+  useEffect(() => {
+    if (user && roles.length > 0 && primaryRole) {
+      const dashMap: Record<string, string> = {
+        FOUNDER: "/dashboard/founder",
+        PRINCIPAL: "/dashboard/principal",
+        TEACHER: "/dashboard/teacher",
+        PARENT: "/dashboard/parent",
+        STUDENT: "/dashboard/student",
+      };
+      navigate(dashMap[primaryRole] || "/dashboard/founder", { replace: true });
+    }
+  }, [user, roles, primaryRole, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,27 +36,9 @@ const Login = () => {
       setLoading(false);
       return;
     }
-
-    // Wait briefly for role data to load
-    setTimeout(() => {
-      // Re-fetch will happen via auth state change, navigate based on role
-      setLoading(false);
-    }, 500);
+    // Role-based redirect will happen via the useEffect above
+    setLoading(false);
   };
-
-  // If already logged in and has a role, redirect
-  const { user, roles } = useAuth();
-  if (user && roles.length > 0) {
-    const dashMap: Record<string, string> = {
-      FOUNDER: "/dashboard/founder",
-      PRINCIPAL: "/dashboard/principal",
-      TEACHER: "/dashboard/teacher",
-      PARENT: "/dashboard/parent",
-      STUDENT: "/dashboard/student",
-    };
-    const target = dashMap[primaryRole || ""] || "/dashboard/founder";
-    navigate(target, { replace: true });
-  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">

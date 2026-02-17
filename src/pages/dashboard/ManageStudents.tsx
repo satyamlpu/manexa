@@ -15,12 +15,27 @@ const ManageStudents = () => {
 
   const fetchData = async () => {
     if (!profile?.institution_id) return;
-    const [s, c] = await Promise.all([
-      supabase.from("students").select("id, roll_number, guardian_name, class_id, user_id, profiles:user_id(full_name, email), classes:class_id(class_name, section)").eq("institution_id", profile.institution_id),
+    const [sRes, cRes] = await Promise.all([
+      supabase.from("students").select("id, roll_number, guardian_name, class_id, user_id").eq("institution_id", profile.institution_id),
       supabase.from("classes").select("id, class_name, section").eq("institution_id", profile.institution_id),
     ]);
-    setStudents(s.data || []);
-    setClasses(c.data || []);
+    
+    const studentData = sRes.data || [];
+    const classData = cRes.data || [];
+    
+    // Fetch profiles separately
+    const userIds = studentData.map(s => s.user_id);
+    const classIds = studentData.map(s => s.class_id).filter(Boolean);
+    
+    const { data: profiles } = userIds.length ? await supabase.from("profiles").select("user_id, full_name, email").in("user_id", userIds) : { data: [] };
+    
+    const profileMap: Record<string, any> = {};
+    profiles?.forEach(p => { profileMap[p.user_id] = p; });
+    const classMap: Record<string, any> = {};
+    classData.forEach(c => { classMap[c.id] = c; });
+    
+    setStudents(studentData.map(s => ({ ...s, profiles: profileMap[s.user_id] || null, classes: s.class_id ? classMap[s.class_id] || null : null })));
+    setClasses(classData);
   };
 
   useEffect(() => { fetchData(); }, [profile?.institution_id]);

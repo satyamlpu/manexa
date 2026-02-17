@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Download } from "lucide-react";
+import { exportFeeReceiptPDF } from "@/lib/pdfExport";
 
 const ManageFees = () => {
   const { profile, primaryRole } = useAuth();
@@ -18,12 +19,23 @@ const ManageFees = () => {
   const fetchData = async () => {
     if (!profile?.institution_id) return;
     const instId = profile.institution_id!;
-    const [f, s] = await Promise.all([
-      supabase.from("fees").select("*, students!inner(id, roll_number, user_id, profiles:user_id(full_name))").eq("institution_id", instId).order("created_at", { ascending: false }),
-      supabase.from("students").select("id, roll_number, user_id, profiles:user_id(full_name)").eq("institution_id", instId),
+    const [fRes, sRes] = await Promise.all([
+      supabase.from("fees").select("*").eq("institution_id", instId).order("created_at", { ascending: false }),
+      supabase.from("students").select("id, roll_number, user_id").eq("institution_id", instId),
     ]);
-    setFees(f.data || []);
-    setStudents(s.data || []);
+    
+    const studentData = sRes.data || [];
+    const userIds = studentData.map(s => s.user_id);
+    const { data: profiles } = userIds.length ? await supabase.from("profiles").select("user_id, full_name").in("user_id", userIds) : { data: [] };
+    
+    const profileMap: Record<string, string> = {};
+    profiles?.forEach(p => { profileMap[p.user_id] = p.full_name; });
+    
+    const studentMap: Record<string, any> = {};
+    studentData.forEach(s => { studentMap[s.id] = { ...s, profiles: { full_name: profileMap[s.user_id] || "—" } }; });
+    
+    setFees((fRes.data || []).map(f => ({ ...f, students: studentMap[f.student_id] || null })));
+    setStudents(studentData.map(s => ({ ...s, profiles: { full_name: profileMap[s.user_id] || "—" } })));
   };
 
   useEffect(() => { fetchData(); }, [profile?.institution_id]);
@@ -117,10 +129,26 @@ const ManageFees = () => {
                       </span>
                     </td>
                     {canManage && (
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 flex items-center gap-2">
                         {f.status !== "paid" && (
                           <button onClick={() => markPaid(f.id, f.amount)} className="text-xs text-primary hover:underline">Mark Paid</button>
                         )}
+                        <button
+                          onClick={() => exportFeeReceiptPDF({
+                            studentName: f.students?.profiles?.full_name || "—",
+                            title: f.title,
+                            amount: f.amount,
+                            paidAmount: f.paid_amount,
+                            status: f.status,
+                            dueDate: f.due_date,
+                            paymentDate: f.payment_date,
+                            receiptNumber: f.receipt_number,
+                          })}
+                          className="text-xs text-muted-foreground hover:text-foreground"
+                          title="Download Receipt"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
                       </td>
                     )}
                   </tr>

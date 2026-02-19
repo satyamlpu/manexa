@@ -23,6 +23,7 @@ import ManageAnnouncements from "./pages/dashboard/ManageAnnouncements";
 import ManageFees from "./pages/dashboard/ManageFees";
 import ManageSalaries from "./pages/dashboard/ManageSalaries";
 import Messages from "./pages/dashboard/Messages";
+import Settings from "./pages/dashboard/Settings";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/dashboard/founder/fees" element={<ProtectedRoute allowedRoles={["FOUNDER"]}><ManageFees /></ProtectedRoute>} />
             <Route path="/dashboard/founder/salaries" element={<ProtectedRoute allowedRoles={["FOUNDER"]}><ManageSalaries /></ProtectedRoute>} />
             <Route path="/dashboard/founder/messages" element={<ProtectedRoute allowedRoles={["FOUNDER"]}><Messages /></ProtectedRoute>} />
+            <Route path="/dashboard/founder/settings" element={<ProtectedRoute allowedRoles={["FOUNDER"]}><Settings /></ProtectedRoute>} />
 
             {/* Principal routes */}
             <Route path="/dashboard/principal" element={<ProtectedRoute allowedRoles={["PRINCIPAL"]}><PrincipalDashboard /></ProtectedRoute>} />

@@ -5,23 +5,32 @@ const plans = [
   {
     name: "Starter",
     price: "Free",
+    priceDetail: null,
     desc: "For small schools getting started.",
-    features: ["Up to 100 students", "Basic attendance", "Task management", "Email support"],
+    features: ["Up to 50 students", "Basic attendance", "Task management", "Email support"],
     highlighted: false,
+    cta: "Start Free Trial",
   },
   {
     name: "Professional",
-    price: "₹999/mo",
-    desc: "For growing institutions.",
-    features: ["Unlimited students", "AI reports & analytics", "Real-time messaging", "Priority support", "Custom branding"],
+    price: null,
+    priceDetail: {
+      student: 25,
+      teacher: 250,
+    },
+    desc: "For growing institutions. Pay only for what you use.",
+    features: ["Unlimited students & teachers", "AI reports & analytics", "Real-time messaging", "Priority support", "Custom branding", "PDF exports"],
     highlighted: true,
+    cta: "Start Free Trial",
   },
   {
     name: "Enterprise",
     price: "Custom",
+    priceDetail: null,
     desc: "For multi-campus organizations.",
-    features: ["Multi-institution support", "Advanced API access", "Dedicated account manager", "SLA guarantee", "SSO & RBAC"],
+    features: ["Multi-institution support", "Advanced API access", "Dedicated account manager", "SLA guarantee", "SSO & RBAC", "White-label option"],
     highlighted: false,
+    cta: "Contact Sales",
   },
 ];
 
@@ -46,16 +55,36 @@ const PricingSection = () => (
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: i * 0.1 }}
-            className={`rounded-2xl p-8 border ${
+            className={`rounded-2xl p-8 border flex flex-col ${
               plan.highlighted
                 ? "bg-card border-primary/40 glow-lime-strong"
                 : "bg-card border-border"
             }`}
           >
+            {plan.highlighted && (
+              <span className="self-start text-xs font-semibold bg-primary text-primary-foreground px-3 py-1 rounded-full mb-4">Most Popular</span>
+            )}
             <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
             <p className="text-sm text-muted-foreground mb-4">{plan.desc}</p>
-            <p className="text-3xl font-bold mb-6">{plan.price}</p>
-            <ul className="space-y-3 mb-8">
+
+            {/* Price display */}
+            {plan.priceDetail ? (
+              <div className="mb-6 space-y-2">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-bold">₹{plan.priceDetail.student}</span>
+                  <span className="text-sm text-muted-foreground">/ student / month</span>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-bold">₹{plan.priceDetail.teacher}</span>
+                  <span className="text-sm text-muted-foreground">/ teacher / month</span>
+                </div>
+                <p className="text-xs text-muted-foreground pt-1">Pay only for active users</p>
+              </div>
+            ) : (
+              <p className="text-3xl font-bold mb-6">{plan.price}</p>
+            )}
+
+            <ul className="space-y-3 mb-8 flex-1">
               {plan.features.map((f) => (
                 <li key={f} className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Check className="w-4 h-4 text-primary flex-shrink-0" />
@@ -71,7 +100,7 @@ const PricingSection = () => (
                   : "border border-border text-foreground hover:border-primary/50 hover:text-primary"
               }`}
             >
-              {plan.name === "Enterprise" ? "Contact Sales" : "Start Free Trial"}
+              {plan.cta}
             </a>
           </motion.div>
         ))}

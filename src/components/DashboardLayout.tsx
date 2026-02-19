@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import manexaLogo from "@/assets/manexa-logo.svg";
 import {
   LayoutDashboard, Users, GraduationCap, BookOpen, ClipboardCheck,
-  ListTodo, Megaphone, LogOut, Menu, X, School, IndianRupee, Wallet, MessageSquare
+  ListTodo, Megaphone, LogOut, Menu, X, School, IndianRupee, Wallet, MessageSquare, Settings
 } from "lucide-react";
 
 interface NavItem {
@@ -26,6 +26,7 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "Salaries", href: "/dashboard/founder/salaries", icon: Wallet },
     { label: "Announcements", href: "/dashboard/founder/announcements", icon: Megaphone },
     { label: "Messages", href: "/dashboard/founder/messages", icon: MessageSquare },
+    { label: "Settings", href: "/dashboard/founder/settings", icon: Settings },
   ],
   PRINCIPAL: [
     { label: "Dashboard", href: "/dashboard/principal", icon: LayoutDashboard },

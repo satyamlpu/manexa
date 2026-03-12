@@ -20,6 +20,8 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "Teachers", href: "/dashboard/founder/teachers", icon: Users },
     { label: "Students", href: "/dashboard/founder/students", icon: GraduationCap },
     { label: "Classes", href: "/dashboard/founder/classes", icon: BookOpen },
+    { label: "Face Register", href: "/dashboard/founder/face-register", icon: UserCheck },
+    { label: "Face Attendance", href: "/dashboard/founder/face-attendance", icon: ScanFace },
     { label: "Attendance", href: "/dashboard/founder/attendance", icon: ClipboardCheck },
     { label: "Tasks", href: "/dashboard/founder/tasks", icon: ListTodo },
     { label: "Fees", href: "/dashboard/founder/fees", icon: IndianRupee },

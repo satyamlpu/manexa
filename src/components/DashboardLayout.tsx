@@ -44,6 +44,8 @@ const roleNavItems: Record<string, NavItem[]> = {
   TEACHER: [
     { label: "Dashboard", href: "/dashboard/teacher", icon: LayoutDashboard },
     { label: "My Classes", href: "/dashboard/teacher/classes", icon: BookOpen },
+    { label: "Face Register", href: "/dashboard/teacher/face-register", icon: UserCheck },
+    { label: "Face Attendance", href: "/dashboard/teacher/face-attendance", icon: ScanFace },
     { label: "Attendance", href: "/dashboard/teacher/attendance", icon: ClipboardCheck },
     { label: "Tasks", href: "/dashboard/teacher/tasks", icon: ListTodo },
     { label: "Messages", href: "/dashboard/teacher/messages", icon: MessageSquare },

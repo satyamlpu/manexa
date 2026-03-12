@@ -24,6 +24,8 @@ import ManageFees from "./pages/dashboard/ManageFees";
 import ManageSalaries from "./pages/dashboard/ManageSalaries";
 import Messages from "./pages/dashboard/Messages";
 import Settings from "./pages/dashboard/Settings";
+import FaceRegistration from "./pages/dashboard/FaceRegistration";
+import FaceAttendance from "./pages/dashboard/FaceAttendance";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +47,8 @@ const App = () => (
             <Route path="/dashboard/founder/teachers" element={<ProtectedRoute allowedRoles={["FOUNDER"]}><ManageTeachers /></ProtectedRoute>} />
             <Route path="/dashboard/founder/students" element={<ProtectedRoute allowedRoles={["FOUNDER"]}><ManageStudents /></ProtectedRoute>} />
             <Route path="/dashboard/founder/classes" element={<ProtectedRoute allowedRoles={["FOUNDER"]}><ManageClasses /></ProtectedRoute>} />
+            <Route path="/dashboard/founder/face-register" element={<ProtectedRoute allowedRoles={["FOUNDER"]}><FaceRegistration /></ProtectedRoute>} />
+            <Route path="/dashboard/founder/face-attendance" element={<ProtectedRoute allowedRoles={["FOUNDER"]}><FaceAttendance /></ProtectedRoute>} />
             <Route path="/dashboard/founder/attendance" element={<ProtectedRoute allowedRoles={["FOUNDER"]}><ManageAttendance /></ProtectedRoute>} />
             <Route path="/dashboard/founder/tasks" element={<ProtectedRoute allowedRoles={["FOUNDER"]}><ManageTasks /></ProtectedRoute>} />
             <Route path="/dashboard/founder/announcements" element={<ProtectedRoute allowedRoles={["FOUNDER"]}><ManageAnnouncements /></ProtectedRoute>} />
@@ -57,6 +61,8 @@ const App = () => (
             <Route path="/dashboard/principal" element={<ProtectedRoute allowedRoles={["PRINCIPAL"]}><PrincipalDashboard /></ProtectedRoute>} />
             <Route path="/dashboard/principal/teachers" element={<ProtectedRoute allowedRoles={["PRINCIPAL"]}><ManageTeachers /></ProtectedRoute>} />
             <Route path="/dashboard/principal/students" element={<ProtectedRoute allowedRoles={["PRINCIPAL"]}><ManageStudents /></ProtectedRoute>} />
+            <Route path="/dashboard/principal/face-register" element={<ProtectedRoute allowedRoles={["PRINCIPAL"]}><FaceRegistration /></ProtectedRoute>} />
+            <Route path="/dashboard/principal/face-attendance" element={<ProtectedRoute allowedRoles={["PRINCIPAL"]}><FaceAttendance /></ProtectedRoute>} />
             <Route path="/dashboard/principal/attendance" element={<ProtectedRoute allowedRoles={["PRINCIPAL"]}><ManageAttendance /></ProtectedRoute>} />
             <Route path="/dashboard/principal/announcements" element={<ProtectedRoute allowedRoles={["PRINCIPAL"]}><ManageAnnouncements /></ProtectedRoute>} />
             <Route path="/dashboard/principal/messages" element={<ProtectedRoute allowedRoles={["PRINCIPAL"]}><Messages /></ProtectedRoute>} />
@@ -65,6 +71,8 @@ const App = () => (
             {/* Teacher routes */}
             <Route path="/dashboard/teacher" element={<ProtectedRoute allowedRoles={["TEACHER"]}><TeacherDashboard /></ProtectedRoute>} />
             <Route path="/dashboard/teacher/classes" element={<ProtectedRoute allowedRoles={["TEACHER"]}><ManageClasses /></ProtectedRoute>} />
+            <Route path="/dashboard/teacher/face-register" element={<ProtectedRoute allowedRoles={["TEACHER"]}><FaceRegistration /></ProtectedRoute>} />
+            <Route path="/dashboard/teacher/face-attendance" element={<ProtectedRoute allowedRoles={["TEACHER"]}><FaceAttendance /></ProtectedRoute>} />
             <Route path="/dashboard/teacher/attendance" element={<ProtectedRoute allowedRoles={["TEACHER"]}><ManageAttendance /></ProtectedRoute>} />
             <Route path="/dashboard/teacher/tasks" element={<ProtectedRoute allowedRoles={["TEACHER"]}><ManageTasks /></ProtectedRoute>} />
             <Route path="/dashboard/teacher/messages" element={<ProtectedRoute allowedRoles={["TEACHER"]}><Messages /></ProtectedRoute>} />
@@ -78,6 +86,7 @@ const App = () => (
 
             {/* Student routes */}
             <Route path="/dashboard/student" element={<ProtectedRoute allowedRoles={["STUDENT"]}><StudentDashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/student/face-register" element={<ProtectedRoute allowedRoles={["STUDENT"]}><FaceRegistration /></ProtectedRoute>} />
             <Route path="/dashboard/student/attendance" element={<ProtectedRoute allowedRoles={["STUDENT"]}><StudentDashboard /></ProtectedRoute>} />
             <Route path="/dashboard/student/tasks" element={<ProtectedRoute allowedRoles={["STUDENT"]}><ManageTasks /></ProtectedRoute>} />
             <Route path="/dashboard/student/announcements" element={<ProtectedRoute allowedRoles={["STUDENT"]}><ManageAnnouncements /></ProtectedRoute>} />

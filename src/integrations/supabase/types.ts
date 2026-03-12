@@ -139,6 +139,38 @@ export type Database = {
           },
         ]
       }
+      face_data: {
+        Row: {
+          created_at: string
+          face_descriptor: Json
+          id: string
+          institution_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          face_descriptor: Json
+          id?: string
+          institution_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          face_descriptor?: Json
+          id?: string
+          institution_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "face_data_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fees: {
         Row: {
           amount: number

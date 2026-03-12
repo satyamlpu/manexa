@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import manexaLogo from "@/assets/manexa-logo.svg";
 import {
   LayoutDashboard, Users, GraduationCap, BookOpen, ClipboardCheck,
-  ListTodo, Megaphone, LogOut, Menu, X, School, IndianRupee, Wallet, MessageSquare, Settings
+  ListTodo, Megaphone, LogOut, Menu, X, School, IndianRupee, Wallet, MessageSquare, Settings, ScanFace, UserCheck
 } from "lucide-react";
 
 interface NavItem {
@@ -20,6 +20,8 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "Teachers", href: "/dashboard/founder/teachers", icon: Users },
     { label: "Students", href: "/dashboard/founder/students", icon: GraduationCap },
     { label: "Classes", href: "/dashboard/founder/classes", icon: BookOpen },
+    { label: "Face Register", href: "/dashboard/founder/face-register", icon: UserCheck },
+    { label: "Face Attendance", href: "/dashboard/founder/face-attendance", icon: ScanFace },
     { label: "Attendance", href: "/dashboard/founder/attendance", icon: ClipboardCheck },
     { label: "Tasks", href: "/dashboard/founder/tasks", icon: ListTodo },
     { label: "Fees", href: "/dashboard/founder/fees", icon: IndianRupee },
@@ -32,6 +34,8 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "Dashboard", href: "/dashboard/principal", icon: LayoutDashboard },
     { label: "Teachers", href: "/dashboard/principal/teachers", icon: Users },
     { label: "Students", href: "/dashboard/principal/students", icon: GraduationCap },
+    { label: "Face Register", href: "/dashboard/principal/face-register", icon: UserCheck },
+    { label: "Face Attendance", href: "/dashboard/principal/face-attendance", icon: ScanFace },
     { label: "Attendance", href: "/dashboard/principal/attendance", icon: ClipboardCheck },
     { label: "Fees", href: "/dashboard/principal/fees", icon: IndianRupee },
     { label: "Announcements", href: "/dashboard/principal/announcements", icon: Megaphone },
@@ -40,6 +44,8 @@ const roleNavItems: Record<string, NavItem[]> = {
   TEACHER: [
     { label: "Dashboard", href: "/dashboard/teacher", icon: LayoutDashboard },
     { label: "My Classes", href: "/dashboard/teacher/classes", icon: BookOpen },
+    { label: "Face Register", href: "/dashboard/teacher/face-register", icon: UserCheck },
+    { label: "Face Attendance", href: "/dashboard/teacher/face-attendance", icon: ScanFace },
     { label: "Attendance", href: "/dashboard/teacher/attendance", icon: ClipboardCheck },
     { label: "Tasks", href: "/dashboard/teacher/tasks", icon: ListTodo },
     { label: "Messages", href: "/dashboard/teacher/messages", icon: MessageSquare },
@@ -53,6 +59,7 @@ const roleNavItems: Record<string, NavItem[]> = {
   ],
   STUDENT: [
     { label: "Dashboard", href: "/dashboard/student", icon: LayoutDashboard },
+    { label: "Face Register", href: "/dashboard/student/face-register", icon: UserCheck },
     { label: "Attendance", href: "/dashboard/student/attendance", icon: ClipboardCheck },
     { label: "Tasks", href: "/dashboard/student/tasks", icon: ListTodo },
     { label: "Announcements", href: "/dashboard/student/announcements", icon: Megaphone },

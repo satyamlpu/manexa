@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import manexaLogo from "@/assets/manexa-logo.svg";
 import {
   LayoutDashboard, Users, GraduationCap, BookOpen, ClipboardCheck,
-  ListTodo, Megaphone, LogOut, Menu, X, School, IndianRupee, Wallet, MessageSquare, Settings
+  ListTodo, Megaphone, LogOut, Menu, X, School, IndianRupee, Wallet, MessageSquare, Settings, ScanFace, UserCheck
 } from "lucide-react";
 
 interface NavItem {

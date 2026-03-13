@@ -2,23 +2,21 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useFaceApi } from "@/hooks/useFaceApi";
+import { useCamera } from "@/hooks/useCamera";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Camera, CheckCircle, Loader2, AlertTriangle, UserCheck, RefreshCw } from "lucide-react";
+import { Camera, CheckCircle, Loader2, AlertTriangle, UserCheck, RefreshCw, MonitorSpeaker } from "lucide-react";
 
 const FaceRegistration = () => {
   const { profile, primaryRole, user } = useAuth();
-  const { modelsLoaded, loadingProgress, detectFace } = useFaceApi();
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const { modelsLoaded, loadingProgress, loadError, detectFace, retryLoad } = useFaceApi();
+  const { videoRef, cameraActive, devices, selectedDeviceId, permissionError, startCamera, stopCamera, switchCamera } = useCamera();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
 
-  const [cameraActive, setCameraActive] = useState(false);
   const [capturing, setCapturing] = useState(false);
   const [registered, setRegistered] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // For admin: select a student to register
   const isAdmin = primaryRole === "FOUNDER" || primaryRole === "PRINCIPAL" || primaryRole === "TEACHER";
   const [students, setStudents] = useState<{ user_id: string; name: string; hasface: boolean }[]>([]);
   const [selectedUserId, setSelectedUserId] = useState("");
@@ -53,7 +51,6 @@ const FaceRegistration = () => {
       );
     };
 
-    // Check if current user already registered (student self-registration)
     if (primaryRole === "STUDENT" && user) {
       supabase
         .from("face_data")
@@ -67,31 +64,6 @@ const FaceRegistration = () => {
 
     if (isAdmin) fetchStudents();
   }, [profile?.institution_id, primaryRole, user]);
-
-  const startCamera = async () => {
-    setError("");
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480, facingMode: "user" },
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-      setCameraActive(true);
-    } catch {
-      setError("Unable to access camera. Please allow camera permissions.");
-    }
-  };
-
-  const stopCamera = () => {
-    streamRef.current?.getTracks().forEach(t => t.stop());
-    streamRef.current = null;
-    setCameraActive(false);
-  };
-
-  useEffect(() => () => stopCamera(), []);
 
   const captureAndRegister = async () => {
     if (!videoRef.current || !modelsLoaded) return;
@@ -116,7 +88,6 @@ const FaceRegistration = () => {
 
       const descriptorArray = Array.from(result.descriptor);
 
-      // Upsert face data
       const { error: dbError } = await supabase.from("face_data").upsert(
         {
           user_id: targetUserId,
@@ -132,14 +103,12 @@ const FaceRegistration = () => {
         setSuccess("Face registered successfully!");
         setRegistered(true);
 
-        // Update student list
         if (isAdmin) {
           setStudents(prev =>
             prev.map(s => (s.user_id === targetUserId ? { ...s, hasface: true } : s))
           );
         }
 
-        // Draw snapshot on canvas
         if (canvasRef.current && videoRef.current) {
           const ctx = canvasRef.current.getContext("2d");
           canvasRef.current.width = videoRef.current.videoWidth;
@@ -196,11 +165,49 @@ const FaceRegistration = () => {
         {/* Model loading status */}
         {!modelsLoaded && (
           <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-3">
-            <Loader2 className="w-5 h-5 animate-spin text-primary" />
-            <div>
-              <p className="text-sm font-medium">Loading AI Models</p>
-              <p className="text-xs text-muted-foreground">{loadingProgress || "Initializing..."}</p>
-            </div>
+            {loadError ? (
+              <>
+                <AlertTriangle className="w-5 h-5 text-destructive" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-destructive">Failed to Load AI Models</p>
+                  <p className="text-xs text-muted-foreground">{loadingProgress}</p>
+                </div>
+                <button
+                  onClick={retryLoad}
+                  className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold inline-flex items-center gap-1.5"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Retry
+                </button>
+              </>
+            ) : (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                <div>
+                  <p className="text-sm font-medium">Loading AI Models</p>
+                  <p className="text-xs text-muted-foreground">{loadingProgress || "Initializing..."}</p>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Camera selector */}
+        {devices.length > 1 && (
+          <div className="bg-card border border-border rounded-xl p-4">
+            <label className="text-sm font-medium mb-2 block flex items-center gap-2">
+              <MonitorSpeaker className="w-4 h-4" />
+              Select Camera
+            </label>
+            <select
+              value={selectedDeviceId}
+              onChange={e => switchCamera(e.target.value)}
+              className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
+            >
+              {devices.map(d => (
+                <option key={d.deviceId} value={d.deviceId}>{d.label}</option>
+              ))}
+            </select>
           </div>
         )}
 
@@ -228,7 +235,7 @@ const FaceRegistration = () => {
           <div className="p-4 flex flex-wrap gap-3">
             {!cameraActive ? (
               <button
-                onClick={startCamera}
+                onClick={() => startCamera()}
                 disabled={!modelsLoaded}
                 className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50 inline-flex items-center gap-2"
               >
@@ -259,6 +266,14 @@ const FaceRegistration = () => {
             )}
           </div>
         </div>
+
+        {/* Permission error */}
+        {permissionError && (
+          <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-xl p-3">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            {permissionError}
+          </div>
+        )}
 
         {/* Status messages */}
         {error && (

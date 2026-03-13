@@ -1,36 +1,56 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import * as faceapi from "face-api.js";
 
-const MODEL_URL = "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights";
+const MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model";
 
 export const useFaceApi = () => {
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState("");
+  const [loadError, setLoadError] = useState(false);
   const loadingRef = useRef(false);
+  const retryCountRef = useRef(0);
+  const MAX_RETRIES = 3;
 
-  useEffect(() => {
+  const loadModels = useCallback(async () => {
     if (loadingRef.current || modelsLoaded) return;
     loadingRef.current = true;
+    setLoadError(false);
 
-    const loadModels = async () => {
-      try {
-        setLoadingProgress("Loading face detection model...");
-        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-        setLoadingProgress("Loading face landmark model...");
-        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-        setLoadingProgress("Loading face recognition model...");
-        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-        setModelsLoaded(true);
-        setLoadingProgress("");
-      } catch (err) {
-        console.error("Failed to load face-api models:", err);
-        setLoadingProgress("Failed to load models. Please refresh.");
-        loadingRef.current = false;
+    try {
+      setLoadingProgress("Loading face detection model...");
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+      setLoadingProgress("Loading face landmark model...");
+      await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+      setLoadingProgress("Loading face recognition model...");
+      await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+      setModelsLoaded(true);
+      setLoadingProgress("");
+      retryCountRef.current = 0;
+    } catch (err) {
+      console.error("Failed to load face-api models:", err);
+      loadingRef.current = false;
+      retryCountRef.current += 1;
+
+      if (retryCountRef.current < MAX_RETRIES) {
+        setLoadingProgress(`Retrying... (attempt ${retryCountRef.current + 1}/${MAX_RETRIES})`);
+        setTimeout(() => loadModels(), 2000);
+      } else {
+        setLoadingProgress("Failed to load models after multiple attempts.");
+        setLoadError(true);
       }
-    };
-
-    loadModels();
+    }
   }, [modelsLoaded]);
+
+  useEffect(() => {
+    loadModels();
+  }, [loadModels]);
+
+  const retryLoad = useCallback(() => {
+    retryCountRef.current = 0;
+    loadingRef.current = false;
+    setLoadError(false);
+    loadModels();
+  }, [loadModels]);
 
   const detectFace = async (
     video: HTMLVideoElement
@@ -40,6 +60,14 @@ export const useFaceApi = () => {
       .withFaceLandmarks()
       .withFaceDescriptor();
     return result || null;
+  };
+
+  const detectAllFaces = async (video: HTMLVideoElement) => {
+    const results = await faceapi
+      .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
+      .withFaceLandmarks()
+      .withFaceDescriptors();
+    return results;
   };
 
   const matchFace = (
@@ -62,5 +90,5 @@ export const useFaceApi = () => {
     return bestMatch;
   };
 
-  return { modelsLoaded, loadingProgress, detectFace, matchFace };
+  return { modelsLoaded, loadingProgress, loadError, detectFace, detectAllFaces, matchFace, retryLoad };
 };

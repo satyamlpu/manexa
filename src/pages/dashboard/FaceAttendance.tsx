@@ -2,9 +2,10 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useFaceApi } from "@/hooks/useFaceApi";
+import { useCamera } from "@/hooks/useCamera";
 import DashboardLayout from "@/components/DashboardLayout";
 import {
-  Camera, Loader2, AlertTriangle, CheckCircle, UserCheck, ScanFace, Users
+  Camera, Loader2, AlertTriangle, CheckCircle, UserCheck, ScanFace, Users, RefreshCw, MonitorSpeaker
 } from "lucide-react";
 
 interface RecognizedStudent {
@@ -15,13 +16,12 @@ interface RecognizedStudent {
 
 const FaceAttendance = () => {
   const { profile, user, primaryRole } = useAuth();
-  const { modelsLoaded, loadingProgress, detectFace, matchFace } = useFaceApi();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const { modelsLoaded, loadingProgress, loadError, detectAllFaces, matchFace, retryLoad } = useFaceApi();
+  const { videoRef, cameraActive, devices, selectedDeviceId, permissionError, startCamera, stopCamera, switchCamera } = useCamera();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const scanningRef = useRef(false);
   const animFrameRef = useRef<number>(0);
 
-  const [cameraActive, setCameraActive] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState("");
   const [storedFaces, setStoredFaces] = useState<{ user_id: string; descriptor: Float32Array }[]>([]);
@@ -35,7 +35,6 @@ const FaceAttendance = () => {
   const today = new Date().toISOString().split("T")[0];
   const isStaff = primaryRole === "FOUNDER" || primaryRole === "PRINCIPAL" || primaryRole === "TEACHER";
 
-  // Load classes
   useEffect(() => {
     if (!profile?.institution_id || !isStaff) return;
     supabase
@@ -45,12 +44,10 @@ const FaceAttendance = () => {
       .then(({ data }) => setClasses(data || []));
   }, [profile?.institution_id, isStaff]);
 
-  // Load stored face data & today's attendance
   const loadData = useCallback(async () => {
     if (!profile?.institution_id) return;
     const instId = profile.institution_id;
 
-    // Get students for selected class or all
     let studentQuery = supabase.from("students").select("user_id, class_id").eq("institution_id", instId);
     if (selectedClassId) studentQuery = studentQuery.eq("class_id", selectedClassId);
     const { data: students } = await studentQuery;
@@ -79,14 +76,12 @@ const FaceAttendance = () => {
     }));
     setStoredFaces(faces);
 
-    // Today's already-marked
     const marked = new Set((attRes.data || []).map(a => a.student_id));
     setMarkedToday(marked);
   }, [profile?.institution_id, selectedClassId, today]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Realtime attendance subscription
   useEffect(() => {
     if (!profile?.institution_id) return;
     const channel = supabase
@@ -107,38 +102,27 @@ const FaceAttendance = () => {
     return () => { supabase.removeChannel(channel); };
   }, [profile?.institution_id, today]);
 
-  const startCamera = async () => {
-    setError("");
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480, facingMode: "user" },
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-      setCameraActive(true);
-    } catch {
-      setError("Unable to access camera.");
+  const drawDetectionOverlay = useCallback((detections: any[]) => {
+    if (!canvasRef.current || !videoRef.current) return;
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (const det of detections) {
+      const box = det.detection.box;
+      ctx.strokeStyle = "hsl(142, 76%, 36%)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(box.x, box.y, box.width, box.height);
     }
-  };
-
-  const stopCamera = () => {
-    scanningRef.current = false;
-    setScanning(false);
-    cancelAnimationFrame(animFrameRef.current);
-    streamRef.current?.getTracks().forEach(t => t.stop());
-    streamRef.current = null;
-    setCameraActive(false);
-  };
-
-  useEffect(() => () => stopCamera(), []);
+  }, [videoRef]);
 
   const markAttendance = async (studentUserId: string) => {
     if (!profile?.institution_id || !user?.id) return;
 
-    // Need to find student record ID and class_id
     const { data: student } = await supabase
       .from("students")
       .select("id, class_id")
@@ -158,7 +142,6 @@ const FaceAttendance = () => {
     });
 
     if (insertErr) {
-      // Likely duplicate
       if (insertErr.message.includes("duplicate") || insertErr.message.includes("unique")) return;
       console.error("Attendance insert error:", insertErr);
       return;
@@ -186,13 +169,14 @@ const FaceAttendance = () => {
       if (!scanningRef.current || !videoRef.current) return;
 
       try {
-        const result = await detectFace(videoRef.current);
-        if (result) {
+        const results = await detectAllFaces(videoRef.current);
+        drawDetectionOverlay(results);
+
+        for (const result of results) {
           const match = matchFace(result.descriptor, storedFaces, 0.5);
           if (match && !cooldown.has(match.user_id)) {
             cooldown.add(match.user_id);
             await markAttendance(match.user_id);
-            // Cooldown for 10 seconds to prevent re-scans
             setTimeout(() => cooldown.delete(match.user_id), 10000);
           }
         }
@@ -201,7 +185,6 @@ const FaceAttendance = () => {
       }
 
       if (scanningRef.current) {
-        // Scan every 1.5 seconds
         setTimeout(() => {
           animFrameRef.current = requestAnimationFrame(scanLoop);
         }, 1500);
@@ -215,6 +198,10 @@ const FaceAttendance = () => {
     scanningRef.current = false;
     setScanning(false);
     cancelAnimationFrame(animFrameRef.current);
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext("2d");
+      ctx?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    }
   };
 
   const presentCount = markedToday.size;
@@ -257,33 +244,71 @@ const FaceAttendance = () => {
           </div>
         </div>
 
-        {/* Class selector */}
-        {isStaff && classes.length > 0 && (
-          <div className="bg-card border border-border rounded-xl p-4">
-            <label className="text-sm font-medium mb-2 block">Filter by Class</label>
-            <select
-              value={selectedClassId}
-              onChange={e => setSelectedClassId(e.target.value)}
-              className="h-10 w-full max-w-xs rounded-lg border border-input bg-background px-3 text-sm"
-            >
-              <option value="">All Classes</option>
-              {classes.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.class_name} {c.section || ""}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        {/* Class selector + Camera selector */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {isStaff && classes.length > 0 && (
+            <div className="bg-card border border-border rounded-xl p-4">
+              <label className="text-sm font-medium mb-2 block">Filter by Class</label>
+              <select
+                value={selectedClassId}
+                onChange={e => setSelectedClassId(e.target.value)}
+                className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
+              >
+                <option value="">All Classes</option>
+                {classes.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.class_name} {c.section || ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {devices.length > 1 && (
+            <div className="bg-card border border-border rounded-xl p-4">
+              <label className="text-sm font-medium mb-2 block flex items-center gap-2">
+                <MonitorSpeaker className="w-4 h-4" />
+                Select Camera
+              </label>
+              <select
+                value={selectedDeviceId}
+                onChange={e => switchCamera(e.target.value)}
+                className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
+              >
+                {devices.map(d => (
+                  <option key={d.deviceId} value={d.deviceId}>{d.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
 
         {/* Model loading */}
         {!modelsLoaded && (
           <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-3">
-            <Loader2 className="w-5 h-5 animate-spin text-primary" />
-            <div>
-              <p className="text-sm font-medium">Loading AI Models</p>
-              <p className="text-xs text-muted-foreground">{loadingProgress}</p>
-            </div>
+            {loadError ? (
+              <>
+                <AlertTriangle className="w-5 h-5 text-destructive" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-destructive">Failed to Load AI Models</p>
+                  <p className="text-xs text-muted-foreground">{loadingProgress}</p>
+                </div>
+                <button
+                  onClick={retryLoad}
+                  className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold inline-flex items-center gap-1.5"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Retry
+                </button>
+              </>
+            ) : (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                <div>
+                  <p className="text-sm font-medium">Loading AI Models</p>
+                  <p className="text-xs text-muted-foreground">{loadingProgress}</p>
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -296,6 +321,12 @@ const FaceAttendance = () => {
                 className={`w-full h-full object-cover ${cameraActive ? "block" : "hidden"}`}
                 muted
                 playsInline
+              />
+              {/* Detection overlay canvas */}
+              <canvas
+                ref={canvasRef}
+                className={`absolute inset-0 w-full h-full pointer-events-none ${cameraActive && scanning ? "block" : "hidden"}`}
+                style={{ objectFit: "cover" }}
               />
               {!cameraActive && (
                 <div className="text-center p-8">
@@ -314,7 +345,7 @@ const FaceAttendance = () => {
             <div className="p-4 flex flex-wrap gap-3">
               {!cameraActive ? (
                 <button
-                  onClick={startCamera}
+                  onClick={() => startCamera()}
                   disabled={!modelsLoaded}
                   className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50 inline-flex items-center gap-2"
                 >
@@ -341,7 +372,7 @@ const FaceAttendance = () => {
                     </button>
                   )}
                   <button
-                    onClick={stopCamera}
+                    onClick={() => { stopScanning(); stopCamera(); }}
                     className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors"
                   >
                     Stop Camera
@@ -392,10 +423,11 @@ const FaceAttendance = () => {
           </div>
         </div>
 
-        {error && (
+        {/* Permission / general errors */}
+        {(permissionError || error) && (
           <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-xl p-3">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-            {error}
+            {permissionError || error}
           </div>
         )}
       </div>

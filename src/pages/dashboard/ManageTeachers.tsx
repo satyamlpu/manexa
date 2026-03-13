@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Plus, X } from "lucide-react";
+import CSVImport from "@/components/CSVImport";
+import { Plus, X, Upload } from "lucide-react";
 
 interface TeacherRow {
   id: string;
@@ -19,6 +20,7 @@ const ManageTeachers = () => {
   const [form, setForm] = useState({ full_name: "", email: "", password: "", department: "", qualification: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showCSV, setShowCSV] = useState(false);
 
   const fetchTeachers = async () => {
     if (!profile?.institution_id) return;
@@ -63,16 +65,26 @@ const ManageTeachers = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <h1 className="text-2xl font-bold">Teachers</h1>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-hover transition-colors"
-          >
-            {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-            {showForm ? "Cancel" : "Add Teacher"}
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => { setShowCSV(!showCSV); setShowForm(false); }} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors">
+              {showCSV ? <X className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
+              {showCSV ? "Close CSV" : "Upload CSV"}
+            </button>
+            <button onClick={() => { setShowForm(!showForm); setShowCSV(false); }} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors">
+              {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+              {showForm ? "Cancel" : "Add Teacher"}
+            </button>
+          </div>
         </div>
+
+        {showCSV && (
+          <div className="bg-card border border-border rounded-xl p-5">
+            <h2 className="text-sm font-semibold mb-3">Bulk Import Teachers via CSV</h2>
+            <CSVImport type="teacher" onComplete={fetchTeachers} />
+          </div>
+        )}
 
         {showForm && (
           <form onSubmit={handleCreate} className="bg-card border border-border rounded-xl p-5 space-y-3">

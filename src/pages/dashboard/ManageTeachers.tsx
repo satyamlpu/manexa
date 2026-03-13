@@ -20,6 +20,7 @@ const ManageTeachers = () => {
   const [form, setForm] = useState({ full_name: "", email: "", password: "", department: "", qualification: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showCSV, setShowCSV] = useState(false);
 
   const fetchTeachers = async () => {
     if (!profile?.institution_id) return;

@@ -13,6 +13,7 @@ const ManageStudents = () => {
   const [form, setForm] = useState({ full_name: "", email: "", password: "", class_id: "", roll_number: "", guardian_name: "", guardian_phone: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showCSV, setShowCSV] = useState(false);
 
   const fetchData = async () => {
     if (!profile?.institution_id) return;

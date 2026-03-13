@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Plus, X } from "lucide-react";
+import CSVImport from "@/components/CSVImport";
+import { Plus, X, Upload } from "lucide-react";
 
 const ManageStudents = () => {
   const { profile } = useAuth();

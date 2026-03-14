@@ -234,32 +234,38 @@ export type Database = {
       institutions: {
         Row: {
           address: string | null
+          api_key: string | null
           created_at: string
           email: string | null
           id: string
           name: string
           phone: string | null
           subscription_plan: string | null
+          token: string | null
           updated_at: string
         }
         Insert: {
           address?: string | null
+          api_key?: string | null
           created_at?: string
           email?: string | null
           id?: string
           name: string
           phone?: string | null
           subscription_plan?: string | null
+          token?: string | null
           updated_at?: string
         }
         Update: {
           address?: string | null
+          api_key?: string | null
           created_at?: string
           email?: string | null
           id?: string
           name?: string
           phone?: string | null
           subscription_plan?: string | null
+          token?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -579,6 +585,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_api_key: { Args: never; Returns: string }
+      generate_institution_token: { Args: never; Returns: string }
       get_user_institution_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -595,6 +603,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      verify_institution_token: { Args: { _token: string }; Returns: string }
     }
     Enums: {
       app_role:

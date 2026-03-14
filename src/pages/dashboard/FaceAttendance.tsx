@@ -7,6 +7,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import {
   Camera, Loader2, AlertTriangle, CheckCircle, UserCheck, ScanFace, Users, RefreshCw, MonitorSpeaker
 } from "lucide-react";
+import * as faceapi from "face-api.js";
 
 interface RecognizedStudent {
   user_id: string;
@@ -16,7 +17,7 @@ interface RecognizedStudent {
 
 const FaceAttendance = () => {
   const { profile, user, primaryRole } = useAuth();
-  const { modelsLoaded, loadingProgress, loadError, detectAllFaces, matchFace, retryLoad } = useFaceApi();
+  const { modelsLoaded, loadingProgress, loadError, detectAllFaces, retryLoad } = useFaceApi();
   const { videoRef, cameraActive, devices, selectedDeviceId, permissionError, startCamera, stopCamera, switchCamera } = useCamera();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scanningRef = useRef(false);
@@ -24,7 +25,7 @@ const FaceAttendance = () => {
 
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState("");
-  const [storedFaces, setStoredFaces] = useState<{ user_id: string; descriptor: Float32Array }[]>([]);
+  const [storedFaces, setStoredFaces] = useState<{ user_id: string; descriptors: Float32Array[] }[]>([]);
   const [profileMap, setProfileMap] = useState<Record<string, string>>({});
   const [markedToday, setMarkedToday] = useState<Set<string>>(new Set());
   const [recentlyMarked, setRecentlyMarked] = useState<RecognizedStudent[]>([]);
@@ -37,9 +38,7 @@ const FaceAttendance = () => {
 
   useEffect(() => {
     if (!profile?.institution_id || !isStaff) return;
-    supabase
-      .from("classes")
-      .select("id, class_name, section")
+    supabase.from("classes").select("id, class_name, section")
       .eq("institution_id", profile.institution_id)
       .then(({ data }) => setClasses(data || []));
   }, [profile?.institution_id, isStaff]);
@@ -51,11 +50,7 @@ const FaceAttendance = () => {
     let studentQuery = supabase.from("students").select("user_id, class_id").eq("institution_id", instId);
     if (selectedClassId) studentQuery = studentQuery.eq("class_id", selectedClassId);
     const { data: students } = await studentQuery;
-    if (!students?.length) {
-      setStoredFaces([]);
-      setTotalStudents(0);
-      return;
-    }
+    if (!students?.length) { setStoredFaces([]); setTotalStudents(0); return; }
 
     setTotalStudents(students.length);
     const userIds = students.map(s => s.user_id);
@@ -70,10 +65,21 @@ const FaceAttendance = () => {
     profileRes.data?.forEach(p => { pMap[p.user_id] = p.full_name; });
     setProfileMap(pMap);
 
-    const faces = (faceRes.data || []).map(f => ({
-      user_id: f.user_id,
-      descriptor: new Float32Array(f.face_descriptor as number[]),
-    }));
+    // Parse multi-sample descriptors
+    const faces = (faceRes.data || []).map(f => {
+      const raw = f.face_descriptor as any;
+      let descriptors: Float32Array[] = [];
+      if (Array.isArray(raw) && raw.length > 0) {
+        if (Array.isArray(raw[0])) {
+          // Multi-sample: array of arrays
+          descriptors = raw.map((d: number[]) => new Float32Array(d));
+        } else {
+          // Single descriptor (legacy)
+          descriptors = [new Float32Array(raw as number[])];
+        }
+      }
+      return { user_id: f.user_id, descriptors };
+    }).filter(f => f.descriptors.length > 0);
     setStoredFaces(faces);
 
     const marked = new Set((attRes.data || []).map(a => a.student_id));
@@ -87,22 +93,34 @@ const FaceAttendance = () => {
     const channel = supabase
       .channel("face-attendance-realtime")
       .on("postgres_changes", {
-        event: "INSERT",
-        schema: "public",
-        table: "attendance",
+        event: "INSERT", schema: "public", table: "attendance",
         filter: `institution_id=eq.${profile.institution_id}`,
       }, (payload) => {
         const newRow = payload.new as any;
-        if (newRow.date === today) {
-          setMarkedToday(prev => new Set([...prev, newRow.student_id]));
-        }
+        if (newRow.date === today) setMarkedToday(prev => new Set([...prev, newRow.student_id]));
       })
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [profile?.institution_id, today]);
 
-  const drawDetectionOverlay = useCallback((detections: any[]) => {
+  // Multi-descriptor matching: find best match across all stored descriptors
+  const matchFaceMulti = useCallback((
+    descriptor: Float32Array,
+    threshold = 0.5
+  ): { user_id: string; distance: number } | null => {
+    let bestMatch: { user_id: string; distance: number } | null = null;
+    for (const stored of storedFaces) {
+      for (const desc of stored.descriptors) {
+        const distance = faceapi.euclideanDistance(Array.from(descriptor), Array.from(desc));
+        if (distance < threshold && (!bestMatch || distance < bestMatch.distance)) {
+          bestMatch = { user_id: stored.user_id, distance };
+        }
+      }
+    }
+    return bestMatch;
+  }, [storedFaces]);
+
+  const drawDetectionOverlay = useCallback((detections: any[], matchedIds: Set<string>) => {
     if (!canvasRef.current || !videoRef.current) return;
     const canvas = canvasRef.current;
     const video = videoRef.current;
@@ -114,31 +132,39 @@ const FaceAttendance = () => {
 
     for (const det of detections) {
       const box = det.detection.box;
-      ctx.strokeStyle = "hsl(142, 76%, 36%)";
-      ctx.lineWidth = 2;
+      // Find if this detection was matched
+      const match = matchFaceMulti(det.descriptor, 0.5);
+      const isMatched = match !== null;
+      const name = match ? (profileMap[match.user_id] || "Unknown") : "";
+
+      ctx.strokeStyle = isMatched ? "hsl(142, 76%, 36%)" : "hsl(0, 84%, 60%)";
+      ctx.lineWidth = 3;
       ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+      if (isMatched && name) {
+        ctx.fillStyle = "hsl(142, 76%, 36%)";
+        const textWidth = ctx.measureText(name).width;
+        ctx.fillRect(box.x, box.y - 22, textWidth + 12, 22);
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 13px sans-serif";
+        ctx.fillText(name, box.x + 6, box.y - 6);
+      }
     }
-  }, [videoRef]);
+  }, [videoRef, matchFaceMulti, profileMap]);
 
   const markAttendance = async (studentUserId: string) => {
     if (!profile?.institution_id || !user?.id) return;
-
     const { data: student } = await supabase
-      .from("students")
-      .select("id, class_id")
+      .from("students").select("id, class_id")
       .eq("user_id", studentUserId)
-      .eq("institution_id", profile.institution_id)
-      .single();
-
+      .eq("institution_id", profile.institution_id).single();
     if (!student) return;
 
     const { error: insertErr } = await supabase.from("attendance").insert({
       institution_id: profile.institution_id,
       student_id: student.id,
       class_id: student.class_id || selectedClassId || "",
-      date: today,
-      status: "Present",
-      marked_by: user.id,
+      date: today, status: "Present", marked_by: user.id,
     });
 
     if (insertErr) {
@@ -148,14 +174,11 @@ const FaceAttendance = () => {
     }
 
     setMarkedToday(prev => new Set([...prev, student.id]));
-    setRecentlyMarked(prev => [
-      {
-        user_id: studentUserId,
-        name: profileMap[studentUserId] || "Unknown",
-        time: new Date().toLocaleTimeString(),
-      },
-      ...prev,
-    ]);
+    setRecentlyMarked(prev => [{
+      user_id: studentUserId,
+      name: profileMap[studentUserId] || "Unknown",
+      time: new Date().toLocaleTimeString(),
+    }, ...prev]);
   };
 
   const startScanning = () => {
@@ -167,27 +190,29 @@ const FaceAttendance = () => {
 
     const scanLoop = async () => {
       if (!scanningRef.current || !videoRef.current) return;
-
       try {
         const results = await detectAllFaces(videoRef.current);
-        drawDetectionOverlay(results);
+        const matchedIds = new Set<string>();
 
         for (const result of results) {
-          const match = matchFace(result.descriptor, storedFaces, 0.5);
-          if (match && !cooldown.has(match.user_id)) {
-            cooldown.add(match.user_id);
-            await markAttendance(match.user_id);
-            setTimeout(() => cooldown.delete(match.user_id), 10000);
+          const match = matchFaceMulti(result.descriptor, 0.5);
+          if (match) {
+            matchedIds.add(match.user_id);
+            if (!cooldown.has(match.user_id)) {
+              cooldown.add(match.user_id);
+              await markAttendance(match.user_id);
+              setTimeout(() => cooldown.delete(match.user_id), 15000);
+            }
           }
         }
+
+        drawDetectionOverlay(results, matchedIds);
       } catch (err) {
         console.error("Scan error:", err);
       }
 
       if (scanningRef.current) {
-        setTimeout(() => {
-          animFrameRef.current = requestAnimationFrame(scanLoop);
-        }, 1500);
+        setTimeout(() => { animFrameRef.current = requestAnimationFrame(scanLoop); }, 800);
       }
     };
 
@@ -216,11 +241,11 @@ const FaceAttendance = () => {
             Face Recognition Attendance
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Automatic attendance marking using face recognition
+            Auto-detects faces and marks attendance instantly
           </p>
         </div>
 
-        {/* Stats cards */}
+        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="bg-card border border-border rounded-xl p-4">
             <Users className="w-4 h-4 text-muted-foreground mb-1" />
@@ -244,7 +269,7 @@ const FaceAttendance = () => {
           </div>
         </div>
 
-        {/* Class selector + Camera selector */}
+        {/* Selectors */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {isStaff && classes.length > 0 && (
             <div className="bg-card border border-border rounded-xl p-4">
@@ -256,9 +281,7 @@ const FaceAttendance = () => {
               >
                 <option value="">All Classes</option>
                 {classes.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.class_name} {c.section || ""}
-                  </option>
+                  <option key={c.id} value={c.id}>{c.class_name} {c.section || ""}</option>
                 ))}
               </select>
             </div>
@@ -266,8 +289,7 @@ const FaceAttendance = () => {
           {devices.length > 1 && (
             <div className="bg-card border border-border rounded-xl p-4">
               <label className="text-sm font-medium mb-2 block flex items-center gap-2">
-                <MonitorSpeaker className="w-4 h-4" />
-                Select Camera
+                <MonitorSpeaker className="w-4 h-4" /> Select Camera
               </label>
               <select
                 value={selectedDeviceId}
@@ -292,12 +314,8 @@ const FaceAttendance = () => {
                   <p className="text-sm font-medium text-destructive">Failed to Load AI Models</p>
                   <p className="text-xs text-muted-foreground">{loadingProgress}</p>
                 </div>
-                <button
-                  onClick={retryLoad}
-                  className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold inline-flex items-center gap-1.5"
-                >
-                  <RefreshCw className="w-3 h-3" />
-                  Retry
+                <button onClick={retryLoad} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold inline-flex items-center gap-1.5">
+                  <RefreshCw className="w-3 h-3" /> Retry
                 </button>
               </>
             ) : (
@@ -319,10 +337,8 @@ const FaceAttendance = () => {
               <video
                 ref={videoRef}
                 className={`w-full h-full object-cover ${cameraActive ? "block" : "hidden"}`}
-                muted
-                playsInline
+                muted playsInline
               />
-              {/* Detection overlay canvas */}
               <canvas
                 ref={canvasRef}
                 className={`absolute inset-0 w-full h-full pointer-events-none ${cameraActive && scanning ? "block" : "hidden"}`}
@@ -337,7 +353,7 @@ const FaceAttendance = () => {
               {scanning && (
                 <div className="absolute top-3 right-3 flex items-center gap-2 bg-primary/90 text-primary-foreground px-3 py-1.5 rounded-full text-xs font-semibold">
                   <span className="w-2 h-2 bg-primary-foreground rounded-full animate-pulse" />
-                  Scanning...
+                  Auto-Detecting...
                 </div>
               )}
             </div>
@@ -349,8 +365,7 @@ const FaceAttendance = () => {
                   disabled={!modelsLoaded}
                   className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50 inline-flex items-center gap-2"
                 >
-                  <Camera className="w-4 h-4" />
-                  Start Camera
+                  <Camera className="w-4 h-4" /> Start Camera
                 </button>
               ) : (
                 <>
@@ -360,8 +375,7 @@ const FaceAttendance = () => {
                       disabled={storedFaces.length === 0}
                       className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50 inline-flex items-center gap-2"
                     >
-                      <ScanFace className="w-4 h-4" />
-                      Start Scanning
+                      <ScanFace className="w-4 h-4" /> Start Auto-Scan
                     </button>
                   ) : (
                     <button
@@ -383,9 +397,9 @@ const FaceAttendance = () => {
 
             {storedFaces.length === 0 && modelsLoaded && (
               <div className="px-4 pb-4">
-                <div className="flex items-center gap-2 text-sm text-yellow-500 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-sm text-yellow-600 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
                   <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                  No registered faces found. Please register student faces first.
+                  No registered faces found. Register student faces first.
                 </div>
               </div>
             )}
@@ -401,9 +415,7 @@ const FaceAttendance = () => {
             </div>
             <div className="max-h-80 overflow-y-auto">
               {recentlyMarked.length === 0 ? (
-                <p className="p-4 text-sm text-muted-foreground text-center">
-                  No students marked yet
-                </p>
+                <p className="p-4 text-sm text-muted-foreground text-center">No students marked yet</p>
               ) : (
                 <ul className="divide-y divide-border">
                   {recentlyMarked.map((s, i) => (
@@ -412,9 +424,7 @@ const FaceAttendance = () => {
                         <p className="text-sm font-medium">{s.name}</p>
                         <p className="text-xs text-muted-foreground">{s.time}</p>
                       </div>
-                      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">
-                        Present
-                      </span>
+                      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">Present</span>
                     </li>
                   ))}
                 </ul>
@@ -423,7 +433,6 @@ const FaceAttendance = () => {
           </div>
         </div>
 
-        {/* Permission / general errors */}
         {(permissionError || error) && (
           <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-xl p-3">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />

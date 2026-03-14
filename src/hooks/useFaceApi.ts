@@ -9,7 +9,7 @@ export const useFaceApi = () => {
   const [loadError, setLoadError] = useState(false);
   const loadingRef = useRef(false);
   const retryCountRef = useRef(0);
-  const MAX_RETRIES = 3;
+  const MAX_RETRIES = 5;
 
   const loadModels = useCallback(async () => {
     if (loadingRef.current || modelsLoaded) return;
@@ -17,11 +17,11 @@ export const useFaceApi = () => {
     setLoadError(false);
 
     try {
-      setLoadingProgress("Loading face detection model...");
+      setLoadingProgress("Loading face detection model (1/3)...");
       await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-      setLoadingProgress("Loading face landmark model...");
+      setLoadingProgress("Loading face landmark model (2/3)...");
       await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-      setLoadingProgress("Loading face recognition model...");
+      setLoadingProgress("Loading face recognition model (3/3)...");
       await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
       setModelsLoaded(true);
       setLoadingProgress("");
@@ -32,8 +32,9 @@ export const useFaceApi = () => {
       retryCountRef.current += 1;
 
       if (retryCountRef.current < MAX_RETRIES) {
+        const delay = Math.min(2000 * retryCountRef.current, 8000);
         setLoadingProgress(`Retrying... (attempt ${retryCountRef.current + 1}/${MAX_RETRIES})`);
-        setTimeout(() => loadModels(), 2000);
+        setTimeout(() => loadModels(), delay);
       } else {
         setLoadingProgress("Failed to load models after multiple attempts.");
         setLoadError(true);
@@ -56,7 +57,7 @@ export const useFaceApi = () => {
     video: HTMLVideoElement
   ): Promise<faceapi.WithFaceDescriptor<faceapi.WithFaceLandmarks<{ detection: faceapi.FaceDetection }>> | null> => {
     const result = await faceapi
-      .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
+      .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.5 }))
       .withFaceLandmarks()
       .withFaceDescriptor();
     return result || null;
@@ -64,7 +65,7 @@ export const useFaceApi = () => {
 
   const detectAllFaces = async (video: HTMLVideoElement) => {
     const results = await faceapi
-      .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
+      .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.5 }))
       .withFaceLandmarks()
       .withFaceDescriptors();
     return results;
@@ -76,17 +77,12 @@ export const useFaceApi = () => {
     threshold = 0.5
   ): { user_id: string; distance: number } | null => {
     let bestMatch: { user_id: string; distance: number } | null = null;
-
     for (const stored of storedDescriptors) {
-      const distance = faceapi.euclideanDistance(
-        Array.from(descriptor),
-        Array.from(stored.descriptor)
-      );
+      const distance = faceapi.euclideanDistance(Array.from(descriptor), Array.from(stored.descriptor));
       if (distance < threshold && (!bestMatch || distance < bestMatch.distance)) {
         bestMatch = { user_id: stored.user_id, distance };
       }
     }
-
     return bestMatch;
   };
 

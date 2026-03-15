@@ -92,6 +92,12 @@ const App = () => (
             <Route path="/dashboard/student/tasks" element={<ProtectedRoute allowedRoles={["STUDENT"]}><ManageTasks /></ProtectedRoute>} />
             <Route path="/dashboard/student/announcements" element={<ProtectedRoute allowedRoles={["STUDENT"]}><ManageAnnouncements /></ProtectedRoute>} />
 
+            {/* Staff routes */}
+            <Route path="/dashboard/staff" element={<ProtectedRoute allowedRoles={["STAFF"]}><StaffDashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/staff/tasks" element={<ProtectedRoute allowedRoles={["STAFF"]}><ManageTasks /></ProtectedRoute>} />
+            <Route path="/dashboard/staff/messages" element={<ProtectedRoute allowedRoles={["STAFF"]}><Messages /></ProtectedRoute>} />
+            <Route path="/dashboard/staff/attendance" element={<ProtectedRoute allowedRoles={["STAFF"]}><ManageAttendance /></ProtectedRoute>} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

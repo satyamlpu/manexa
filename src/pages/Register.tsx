@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import manexaLogo from "@/assets/manexa-logo.svg";
 import { School, Users, GraduationCap, ArrowLeft } from "lucide-react";
 
-type RegistrationType = "founder" | "teacher" | "student" | null;
+type RegistrationType = "founder" | "teacher" | "student" | "staff" | null;
 
 const Register = () => {
   const [regType, setRegType] = useState<RegistrationType>(null);

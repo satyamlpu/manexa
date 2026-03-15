@@ -26,6 +26,7 @@ import Messages from "./pages/dashboard/Messages";
 import Settings from "./pages/dashboard/Settings";
 import FaceRegistration from "./pages/dashboard/FaceRegistration";
 import FaceAttendance from "./pages/dashboard/FaceAttendance";
+import StaffDashboard from "./pages/dashboard/StaffDashboard";
 
 const queryClient = new QueryClient();
 

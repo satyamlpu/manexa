@@ -96,7 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setRoles([]);
   };
 
-  const rolePriority: AppRole[] = ["SUPER_ADMIN", "FOUNDER", "PRINCIPAL", "TEACHER", "PARENT", "STUDENT"];
+  const rolePriority: AppRole[] = ["SUPER_ADMIN", "FOUNDER", "PRINCIPAL", "TEACHER", "STAFF", "PARENT", "STUDENT"];
   const primaryRole = rolePriority.find(r => roles.includes(r)) ?? null;
 
   const refreshUserData = async () => {

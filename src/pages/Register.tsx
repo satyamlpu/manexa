@@ -107,7 +107,7 @@ const Register = () => {
 
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-      const role = regType === "teacher" ? "TEACHER" : "STUDENT";
+      const role = regType === "teacher" ? "TEACHER" : regType === "staff" ? "STAFF" : "STUDENT";
       const response = await supabase.functions.invoke("register-with-token", {
         body: {
           role,
@@ -116,6 +116,7 @@ const Register = () => {
           email,
           phone,
           subject: regType === "teacher" ? subject : undefined,
+          department: regType === "staff" ? department : undefined,
           class_name: regType === "student" ? className : undefined,
           section: regType === "student" ? section : undefined,
         },
@@ -128,7 +129,8 @@ const Register = () => {
       }
 
       await refreshUserData();
-      navigate(role === "TEACHER" ? "/dashboard/teacher" : "/dashboard/student");
+      const dashMap: Record<string, string> = { TEACHER: "/dashboard/teacher", STUDENT: "/dashboard/student", STAFF: "/dashboard/staff" };
+      navigate(dashMap[role] || "/login");
     } else {
       setEmailSent(true);
     }

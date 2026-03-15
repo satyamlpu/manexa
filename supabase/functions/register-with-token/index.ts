@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { role, institution_token, full_name, email, subject, class_name, section, phone } = await req.json();
+    const { role, institution_token, full_name, email, subject, class_name, section, phone, department } = await req.json();
 
     if (!role || !institution_token || !full_name || !email) {
       return new Response(

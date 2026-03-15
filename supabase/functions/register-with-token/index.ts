@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
 
     if (!["TEACHER", "STUDENT", "STAFF"].includes(role)) {
       return new Response(
-        JSON.stringify({ success: false, message: "Invalid role. Must be TEACHER or STUDENT" }),
+        JSON.stringify({ success: false, message: "Invalid role. Must be TEACHER, STUDENT, or STAFF" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

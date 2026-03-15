@@ -311,6 +311,40 @@ const Register = () => {
             </>
           )}
 
+          {/* Staff Registration */}
+          {regType === "staff" && (
+            <>
+              <button onClick={() => { setRegType(null); setError(""); }}
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+                <ArrowLeft className="w-4 h-4" /> Back
+              </button>
+              <h2 className="text-lg font-semibold mb-1">Staff Registration</h2>
+              <p className="text-xs text-muted-foreground mb-4">Join your institution with a token</p>
+              <form onSubmit={handleTokenRegistration} className="space-y-4">
+                <div><label className="block text-sm font-medium mb-1.5">Full Name</label>
+                  <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputClass} required /></div>
+                <div><label className="block text-sm font-medium mb-1.5">Email</label>
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} required /></div>
+                <div><label className="block text-sm font-medium mb-1.5">Password</label>
+                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} required minLength={6} /></div>
+                <div><label className="block text-sm font-medium mb-1.5">Department</label>
+                  <input type="text" value={department} onChange={(e) => setDepartment(e.target.value)} className={inputClass} placeholder="e.g. Administration" /></div>
+                <div><label className="block text-sm font-medium mb-1.5">Phone</label>
+                  <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} /></div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">Institution Token <span className="text-destructive">*</span></label>
+                  <input type="text" value={institutionToken} onChange={(e) => setInstitutionToken(e.target.value.toUpperCase())}
+                    className={inputClass} required placeholder="e.g. INS-ABCD1234" />
+                  <p className="text-xs text-muted-foreground mt-1">Get this token from your institution's founder/admin</p>
+                </div>
+                <button type="submit" disabled={loading}
+                  className="w-full h-10 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary-hover transition-colors disabled:opacity-50">
+                  {loading ? "Registering..." : "Join as Staff"}
+                </button>
+              </form>
+            </>
+          )}
+
           <p className="text-center text-sm text-muted-foreground mt-4">
             Already have an account?{" "}
             <Link to="/login" className="text-primary hover:underline">Sign in</Link>

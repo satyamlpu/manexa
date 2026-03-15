@@ -57,6 +57,14 @@ const Register = () => {
       color: "text-accent",
       bg: "bg-accent/10 border-accent/30 hover:border-accent/60",
     },
+    {
+      type: "staff" as const,
+      title: "Staff",
+      description: "Join an existing institution as staff member",
+      icon: Users,
+      color: "text-muted-foreground",
+      bg: "bg-muted border-border hover:border-foreground/30",
+    },
   ];
 
   const handleFounderStep1 = (e: React.FormEvent) => {

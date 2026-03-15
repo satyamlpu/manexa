@@ -22,11 +22,12 @@ const Register = () => {
   const [address, setAddress] = useState("");
   const [founderStep, setFounderStep] = useState(1);
 
-  // Teacher/Student fields
+  // Teacher/Student/Staff fields
   const [institutionToken, setInstitutionToken] = useState("");
   const [subject, setSubject] = useState("");
   const [className, setClassName] = useState("");
   const [section, setSection] = useState("");
+  const [department, setDepartment] = useState("");
 
   const { signUp, refreshUserData } = useAuth();
   const navigate = useNavigate();

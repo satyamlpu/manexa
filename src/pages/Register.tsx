@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import manexaLogo from "@/assets/manexa-logo.svg";
 import { School, Users, GraduationCap, ArrowLeft } from "lucide-react";
 
-type RegistrationType = "founder" | "teacher" | "student" | null;
+type RegistrationType = "founder" | "teacher" | "student" | "staff" | null;
 
 const Register = () => {
   const [regType, setRegType] = useState<RegistrationType>(null);
@@ -22,11 +22,12 @@ const Register = () => {
   const [address, setAddress] = useState("");
   const [founderStep, setFounderStep] = useState(1);
 
-  // Teacher/Student fields
+  // Teacher/Student/Staff fields
   const [institutionToken, setInstitutionToken] = useState("");
   const [subject, setSubject] = useState("");
   const [className, setClassName] = useState("");
   const [section, setSection] = useState("");
+  const [department, setDepartment] = useState("");
 
   const { signUp, refreshUserData } = useAuth();
   const navigate = useNavigate();
@@ -55,6 +56,14 @@ const Register = () => {
       icon: GraduationCap,
       color: "text-accent",
       bg: "bg-accent/10 border-accent/30 hover:border-accent/60",
+    },
+    {
+      type: "staff" as const,
+      title: "Staff",
+      description: "Join an existing institution as staff member",
+      icon: Users,
+      color: "text-muted-foreground",
+      bg: "bg-muted border-border hover:border-foreground/30",
     },
   ];
 
@@ -98,7 +107,7 @@ const Register = () => {
 
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-      const role = regType === "teacher" ? "TEACHER" : "STUDENT";
+      const role = regType === "teacher" ? "TEACHER" : regType === "staff" ? "STAFF" : "STUDENT";
       const response = await supabase.functions.invoke("register-with-token", {
         body: {
           role,
@@ -107,6 +116,7 @@ const Register = () => {
           email,
           phone,
           subject: regType === "teacher" ? subject : undefined,
+          department: regType === "staff" ? department : undefined,
           class_name: regType === "student" ? className : undefined,
           section: regType === "student" ? section : undefined,
         },
@@ -119,7 +129,8 @@ const Register = () => {
       }
 
       await refreshUserData();
-      navigate(role === "TEACHER" ? "/dashboard/teacher" : "/dashboard/student");
+      const dashMap: Record<string, string> = { TEACHER: "/dashboard/teacher", STUDENT: "/dashboard/student", STAFF: "/dashboard/staff" };
+      navigate(dashMap[role] || "/login");
     } else {
       setEmailSent(true);
     }
@@ -295,6 +306,40 @@ const Register = () => {
                 <button type="submit" disabled={loading}
                   className="w-full h-10 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary-hover transition-colors disabled:opacity-50">
                   {loading ? "Registering..." : "Join as Student"}
+                </button>
+              </form>
+            </>
+          )}
+
+          {/* Staff Registration */}
+          {regType === "staff" && (
+            <>
+              <button onClick={() => { setRegType(null); setError(""); }}
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+                <ArrowLeft className="w-4 h-4" /> Back
+              </button>
+              <h2 className="text-lg font-semibold mb-1">Staff Registration</h2>
+              <p className="text-xs text-muted-foreground mb-4">Join your institution with a token</p>
+              <form onSubmit={handleTokenRegistration} className="space-y-4">
+                <div><label className="block text-sm font-medium mb-1.5">Full Name</label>
+                  <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputClass} required /></div>
+                <div><label className="block text-sm font-medium mb-1.5">Email</label>
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} required /></div>
+                <div><label className="block text-sm font-medium mb-1.5">Password</label>
+                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} required minLength={6} /></div>
+                <div><label className="block text-sm font-medium mb-1.5">Department</label>
+                  <input type="text" value={department} onChange={(e) => setDepartment(e.target.value)} className={inputClass} placeholder="e.g. Administration" /></div>
+                <div><label className="block text-sm font-medium mb-1.5">Phone</label>
+                  <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} /></div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">Institution Token <span className="text-destructive">*</span></label>
+                  <input type="text" value={institutionToken} onChange={(e) => setInstitutionToken(e.target.value.toUpperCase())}
+                    className={inputClass} required placeholder="e.g. INS-ABCD1234" />
+                  <p className="text-xs text-muted-foreground mt-1">Get this token from your institution's founder/admin</p>
+                </div>
+                <button type="submit" disabled={loading}
+                  className="w-full h-10 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary-hover transition-colors disabled:opacity-50">
+                  {loading ? "Registering..." : "Join as Staff"}
                 </button>
               </form>
             </>

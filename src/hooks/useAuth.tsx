@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
-type AppRole = "SUPER_ADMIN" | "FOUNDER" | "PRINCIPAL" | "TEACHER" | "PARENT" | "STUDENT";
+type AppRole = "SUPER_ADMIN" | "FOUNDER" | "PRINCIPAL" | "TEACHER" | "PARENT" | "STUDENT" | "STAFF";
 
 interface Profile {
   id: string;
@@ -96,7 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setRoles([]);
   };
 
-  const rolePriority: AppRole[] = ["SUPER_ADMIN", "FOUNDER", "PRINCIPAL", "TEACHER", "PARENT", "STUDENT"];
+  const rolePriority: AppRole[] = ["SUPER_ADMIN", "FOUNDER", "PRINCIPAL", "TEACHER", "STAFF", "PARENT", "STUDENT"];
   const primaryRole = rolePriority.find(r => roles.includes(r)) ?? null;
 
   const refreshUserData = async () => {

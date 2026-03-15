@@ -64,6 +64,12 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "Tasks", href: "/dashboard/student/tasks", icon: ListTodo },
     { label: "Announcements", href: "/dashboard/student/announcements", icon: Megaphone },
   ],
+  STAFF: [
+    { label: "Dashboard", href: "/dashboard/staff", icon: LayoutDashboard },
+    { label: "Tasks", href: "/dashboard/staff/tasks", icon: ListTodo },
+    { label: "Attendance", href: "/dashboard/staff/attendance", icon: ClipboardCheck },
+    { label: "Messages", href: "/dashboard/staff/messages", icon: MessageSquare },
+  ],
 };
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {

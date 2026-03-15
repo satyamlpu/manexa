@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { role, institution_token, full_name, email, subject, class_name, section, phone } = await req.json();
+    const { role, institution_token, full_name, email, subject, class_name, section, phone, department } = await req.json();
 
     if (!role || !institution_token || !full_name || !email) {
       return new Response(
@@ -20,9 +20,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!["TEACHER", "STUDENT"].includes(role)) {
+    if (!["TEACHER", "STUDENT", "STAFF"].includes(role)) {
       return new Response(
-        JSON.stringify({ success: false, message: "Invalid role. Must be TEACHER or STUDENT" }),
+        JSON.stringify({ success: false, message: "Invalid role. Must be TEACHER, STUDENT, or STAFF" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

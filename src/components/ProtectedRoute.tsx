@@ -35,6 +35,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
       TEACHER: "/dashboard/teacher",
       PARENT: "/dashboard/parent",
       STUDENT: "/dashboard/student",
+      STAFF: "/dashboard/staff",
     };
     return <Navigate to={dashMap[primaryRole || ""] || "/login"} replace />;
   }

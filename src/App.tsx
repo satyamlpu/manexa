@@ -69,6 +69,8 @@ const App = () => (
             <Route path="/dashboard/principal/face-register" element={<ProtectedRoute allowedRoles={["PRINCIPAL"]}><FaceRegistration /></ProtectedRoute>} />
             <Route path="/dashboard/principal/face-attendance" element={<ProtectedRoute allowedRoles={["PRINCIPAL"]}><FaceAttendance /></ProtectedRoute>} />
             <Route path="/dashboard/principal/attendance" element={<ProtectedRoute allowedRoles={["PRINCIPAL"]}><ManageAttendance /></ProtectedRoute>} />
+            <Route path="/dashboard/principal/attendance" element={<ProtectedRoute allowedRoles={["PRINCIPAL"]}><ManageAttendance /></ProtectedRoute>} />
+            <Route path="/dashboard/principal/tasks" element={<ProtectedRoute allowedRoles={["PRINCIPAL"]}><ManageTasks /></ProtectedRoute>} />
             <Route path="/dashboard/principal/announcements" element={<ProtectedRoute allowedRoles={["PRINCIPAL"]}><ManageAnnouncements /></ProtectedRoute>} />
             <Route path="/dashboard/principal/messages" element={<ProtectedRoute allowedRoles={["PRINCIPAL"]}><Messages /></ProtectedRoute>} />
             <Route path="/dashboard/principal/fees" element={<ProtectedRoute allowedRoles={["PRINCIPAL"]}><ManageFees /></ProtectedRoute>} />

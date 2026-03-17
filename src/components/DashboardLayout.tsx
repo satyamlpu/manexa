@@ -37,6 +37,7 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "Face Register", href: "/dashboard/principal/face-register", icon: UserCheck },
     { label: "Face Attendance", href: "/dashboard/principal/face-attendance", icon: ScanFace },
     { label: "Attendance", href: "/dashboard/principal/attendance", icon: ClipboardCheck },
+    { label: "Tasks", href: "/dashboard/principal/tasks", icon: ListTodo },
     { label: "Fees", href: "/dashboard/principal/fees", icon: IndianRupee },
     { label: "Announcements", href: "/dashboard/principal/announcements", icon: Megaphone },
     { label: "Messages", href: "/dashboard/principal/messages", icon: MessageSquare },

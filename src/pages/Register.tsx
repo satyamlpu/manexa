@@ -123,7 +123,16 @@ const Register = () => {
     setLoading(true);
 
     const { error: signUpError } = await signUp(email, password, fullName);
-    if (signUpError) { setError(signUpError.message); setLoading(false); return; }
+    if (signUpError) {
+      const msg = signUpError.message.toLowerCase();
+      if (msg.includes("already registered") || msg.includes("already been registered")) {
+        toast({ title: "Account exists", description: "This email is already registered. Try signing in instead.", variant: "destructive" });
+      } else {
+        toast({ title: "Sign up failed", description: signUpError.message, variant: "destructive" });
+      }
+      setLoading(false);
+      return;
+    }
 
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {

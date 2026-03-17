@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 import manexaLogo from "@/assets/manexa-logo.svg";
-import { School, Users, GraduationCap, ArrowLeft } from "lucide-react";
+import { School, Users, GraduationCap, ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 
 type RegistrationType = "founder" | "teacher" | "student" | "staff" | null;
 
@@ -67,9 +68,14 @@ const Register = () => {
     },
   ];
 
+  const [showPassword, setShowPassword] = useState(false);
+
   const handleFounderStep1 = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) { setError("Password must be at least 6 characters"); return; }
+    if (password.length < 6) {
+      toast({ title: "Weak password", description: "Password must be at least 6 characters.", variant: "destructive" });
+      return;
+    }
     setError("");
     setFounderStep(2);
   };
@@ -79,15 +85,29 @@ const Register = () => {
     setError("");
     setLoading(true);
     const { error: signUpError } = await signUp(email, password, fullName);
-    if (signUpError) { setError(signUpError.message); setLoading(false); return; }
+    if (signUpError) {
+      const msg = signUpError.message.toLowerCase();
+      if (msg.includes("already registered") || msg.includes("already been registered")) {
+        toast({ title: "Account exists", description: "This email is already registered. Try signing in instead.", variant: "destructive" });
+      } else {
+        toast({ title: "Sign up failed", description: signUpError.message, variant: "destructive" });
+      }
+      setLoading(false);
+      return;
+    }
 
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       const response = await supabase.functions.invoke("register-institution", {
         body: { institution_name: institutionName, full_name: fullName, email, phone, address },
       });
-      if (response.error) { setError("Account created but institution setup failed. Contact support."); setLoading(false); return; }
+      if (response.error || !response.data?.success) {
+        toast({ title: "Institution setup failed", description: response.data?.message || "Account created but institution setup failed. Please contact support.", variant: "destructive" });
+        setLoading(false);
+        return;
+      }
       await refreshUserData();
+      toast({ title: "Welcome!", description: "Your institution has been created successfully." });
       navigate("/dashboard/founder");
     } else {
       setEmailSent(true);
@@ -103,7 +123,16 @@ const Register = () => {
     setLoading(true);
 
     const { error: signUpError } = await signUp(email, password, fullName);
-    if (signUpError) { setError(signUpError.message); setLoading(false); return; }
+    if (signUpError) {
+      const msg = signUpError.message.toLowerCase();
+      if (msg.includes("already registered") || msg.includes("already been registered")) {
+        toast({ title: "Account exists", description: "This email is already registered. Try signing in instead.", variant: "destructive" });
+      } else {
+        toast({ title: "Sign up failed", description: signUpError.message, variant: "destructive" });
+      }
+      setLoading(false);
+      return;
+    }
 
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {

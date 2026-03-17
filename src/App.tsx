@@ -9,6 +9,8 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import FounderDashboard from "./pages/dashboard/FounderDashboard";
 import PrincipalDashboard from "./pages/dashboard/PrincipalDashboard";
 import TeacherDashboard from "./pages/dashboard/TeacherDashboard";
@@ -41,6 +43,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Founder routes */}
             <Route path="/dashboard/founder" element={<ProtectedRoute allowedRoles={["FOUNDER"]}><FounderDashboard /></ProtectedRoute>} />

@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 import manexaLogo from "@/assets/manexa-logo.svg";
-import { School, Users, GraduationCap, ArrowLeft } from "lucide-react";
+import { School, Users, GraduationCap, ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 
 type RegistrationType = "founder" | "teacher" | "student" | "staff" | null;
 

@@ -68,9 +68,14 @@ const Register = () => {
     },
   ];
 
+  const [showPassword, setShowPassword] = useState(false);
+
   const handleFounderStep1 = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) { setError("Password must be at least 6 characters"); return; }
+    if (password.length < 6) {
+      toast({ title: "Weak password", description: "Password must be at least 6 characters.", variant: "destructive" });
+      return;
+    }
     setError("");
     setFounderStep(2);
   };

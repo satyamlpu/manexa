@@ -85,15 +85,29 @@ const Register = () => {
     setError("");
     setLoading(true);
     const { error: signUpError } = await signUp(email, password, fullName);
-    if (signUpError) { setError(signUpError.message); setLoading(false); return; }
+    if (signUpError) {
+      const msg = signUpError.message.toLowerCase();
+      if (msg.includes("already registered") || msg.includes("already been registered")) {
+        toast({ title: "Account exists", description: "This email is already registered. Try signing in instead.", variant: "destructive" });
+      } else {
+        toast({ title: "Sign up failed", description: signUpError.message, variant: "destructive" });
+      }
+      setLoading(false);
+      return;
+    }
 
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       const response = await supabase.functions.invoke("register-institution", {
         body: { institution_name: institutionName, full_name: fullName, email, phone, address },
       });
-      if (response.error) { setError("Account created but institution setup failed. Contact support."); setLoading(false); return; }
+      if (response.error || !response.data?.success) {
+        toast({ title: "Institution setup failed", description: response.data?.message || "Account created but institution setup failed. Please contact support.", variant: "destructive" });
+        setLoading(false);
+        return;
+      }
       await refreshUserData();
+      toast({ title: "Welcome!", description: "Your institution has been created successfully." });
       navigate("/dashboard/founder");
     } else {
       setEmailSent(true);
